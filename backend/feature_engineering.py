@@ -39,7 +39,6 @@ def build_features(stats):
         ]
     )
 
-    # Basic opportunity statistics
     players["opportunities"] = (
         players["carries"]
         + players["targets"]
@@ -50,7 +49,6 @@ def build_features(stats):
         + players["receiving_yards"]
     )
 
-    # Rolling 3-game averages
     for column in ROLLING_COLUMNS:
         players[
             f"{column}_avg_3"
@@ -84,13 +82,12 @@ def build_features(stats):
         .transform(
             lambda values:
             values.rolling(
-                3,
+                window=3,
                 min_periods=1
             ).mean()
         )
     )
 
-    # Changes in usage can help detect breakouts
     players[
         "target_share_change"
     ] = (
@@ -117,19 +114,35 @@ def build_features(stats):
         .diff()
     )
 
-    # What we want the model to predict:
-    # next week's PPR fantasy points
-    players[
-        "next_week_fantasy_points"
-    ] = (
-        players
-        .groupby(
-            [
-                "player_id",
-                "season",
-            ]
-        )["fantasy_points_ppr"]
-        .shift(-1)
+    # Build a true next-WEEK target.
+    next_week = players[
+        [
+            "player_id",
+            "season",
+            "week",
+            "fantasy_points_ppr",
+        ]
+    ].copy()
+
+    next_week["week"] = (
+        next_week["week"] - 1
+    )
+
+    next_week = next_week.rename(
+        columns={
+            "fantasy_points_ppr":
+            "next_week_fantasy_points"
+        }
+    )
+
+    players = players.merge(
+        next_week,
+        on=[
+            "player_id",
+            "season",
+            "week",
+        ],
+        how="left"
     )
 
     return players

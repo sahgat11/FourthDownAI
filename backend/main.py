@@ -4,6 +4,12 @@ from data_loader import (
 from feature_engineering import (
     build_features,
 )
+from baseline_model import (
+    evaluate_baseline,
+)
+from ml_model import (
+    train_and_evaluate,
+)
 
 
 def main():
@@ -13,42 +19,106 @@ def main():
         stats
     )
 
+    baseline = evaluate_baseline(
+        features,
+        test_season=2026
+    )
+
+    ml = train_and_evaluate(
+        features,
+        test_season=2026
+    )
+
     print()
     print("FourthDown AI")
     print("=" * 60)
 
     print()
+    print("MODEL COMPARISON")
+    print("-" * 60)
+
     print(
-        f"Created {len(features)} "
-        f"RB/WR/TE player-week records."
+        f"Training records: "
+        f"{ml['train_size']}"
+    )
+
+    print(
+        f"Test records:     "
+        f"{ml['test_size']}"
     )
 
     print()
-    print("Sample ML features:")
+
+    print(
+        f"Baseline MAE: "
+        f"{baseline['mae']:.2f}"
+    )
+
+    print(
+        f"XGBoost MAE:  "
+        f"{ml['mae']:.2f}"
+    )
+
+    print()
+
+    print(
+        f"Baseline RMSE: "
+        f"{baseline['rmse']:.2f}"
+    )
+
+    print(
+        f"XGBoost RMSE:  "
+        f"{ml['rmse']:.2f}"
+    )
+
+    improvement = (
+        (
+            baseline["mae"]
+            - ml["mae"]
+        )
+        / baseline["mae"]
+        * 100
+    )
+
+    print()
+    print(
+        f"MAE improvement: "
+        f"{improvement:.1f}%"
+    )
+
+    print()
+    print("Most important features:")
+    print()
+
+    print(
+        ml["importance"]
+        .head(10)
+        .to_string(
+            index=False
+        )
+    )
+
+    print()
+    print("Largest XGBoost misses:")
     print()
 
     columns = [
         "player_display_name",
         "position",
-        "team",
-        "season",
         "week",
-        "fantasy_points_ppr",
-        "fantasy_points_ppr_avg_3",
-        "opportunities",
-        "opportunities_avg_3",
-        "target_share",
-        "target_share_avg_3",
-        "target_share_change",
-        "wopr_avg_3",
+        "ml_prediction",
         "next_week_fantasy_points",
+        "ml_error",
     ]
 
     print(
-        features[
-            columns
-        ]
-        .tail(25)
+        ml["predictions"]
+        .sort_values(
+            "ml_error",
+            ascending=False
+        )
+        .head(10)
+        [columns]
         .to_string(
             index=False
         )
