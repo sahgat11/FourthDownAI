@@ -1,40 +1,24 @@
 import nflreadpy as nfl
 
 
-def load_player_stats(season):
-    print(f"Loading {season} NFL player data...")
+def load_player_stats(
+    seasons=None
+):
+    if seasons is None:
+        seasons = [
+            2023,
+            2024,
+            2025,
+            2026,
+        ]
 
-    stats = nfl.load_player_stats(
-        [season]
+    print(
+        "Loading NFL player data "
+        f"for {seasons}..."
     )
 
-    stats = stats.to_pandas()
+    stats = nfl.load_player_stats(
+        seasons
+    )
 
-    return stats
-
-
-def get_fantasy_players(stats):
-    fantasy_positions = [
-        "QB",
-        "RB",
-        "WR",
-        "TE",
-    ]
-
-    players = stats[
-        stats["position"].isin(
-            fantasy_positions
-        )
-    ].copy()
-
-    columns = [
-        "player_display_name",
-        "position",
-        "team",
-        "opponent_team",
-        "week",
-        "fantasy_points",
-        "fantasy_points_ppr",
-    ]
-
-    return players[columns]
+    return stats.to_pandas()
