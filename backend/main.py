@@ -1,17 +1,21 @@
 from data_loader import (
     load_player_stats,
 )
+
 from feature_engineering import (
     build_features,
 )
+
 from baseline_model import (
     evaluate_baseline,
 )
+
 from ml_model import (
     train_and_evaluate,
     train_production_model,
     predict_next_week,
 )
+
 from breakout_engine import (
     calculate_breakout_scores,
 )
@@ -24,6 +28,8 @@ def main():
         stats
     )
 
+    # Evaluate our ML model against
+    # the simple 3-game-average baseline.
     baseline = evaluate_baseline(
         features,
         test_season=2026
@@ -66,18 +72,27 @@ def main():
         f"{improvement:.1f}%"
     )
 
-    # Train model on every week for which
-    # the following week's result is known.
+    # Train a production model using
+    # every player-week whose next-week
+    # outcome is already known.
     production_model = (
         train_production_model(
             features
         )
     )
 
+    # Generate predictions using only
+    # the latest available NFL week.
     predictions = predict_next_week(
         features,
         production_model,
         season=2026
+    )
+
+    current_week = int(
+        predictions[
+            "week"
+        ].max()
     )
 
     breakouts = (
@@ -87,7 +102,11 @@ def main():
     )
 
     print()
-    print("BREAKOUT WATCH")
+    print(
+        f"BREAKOUT WATCH - "
+        f"AFTER WEEK {current_week}"
+    )
+
     print("-" * 70)
 
     columns = [
@@ -119,6 +138,8 @@ def main():
         "Expected Gain",
         "Breakout Score",
     ]
+
+    print()
 
     print(
         top_breakouts.to_string(

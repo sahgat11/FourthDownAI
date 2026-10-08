@@ -27,6 +27,18 @@ FEATURE_COLUMNS = [
 ]
 
 
+def create_model():
+    return XGBRegressor(
+        n_estimators=300,
+        max_depth=4,
+        learning_rate=0.03,
+        subsample=0.8,
+        colsample_bytree=0.8,
+        objective="reg:squarederror",
+        random_state=42,
+    )
+
+
 def train_and_evaluate(
     features,
     test_season=2026
@@ -45,31 +57,29 @@ def train_and_evaluate(
         data["season"] == test_season
     ].copy()
 
-    X_train = train[
-        FEATURE_COLUMNS
-    ].fillna(0)
+    X_train = (
+        train[
+            FEATURE_COLUMNS
+        ]
+        .fillna(0)
+    )
 
     y_train = train[
         "next_week_fantasy_points"
     ]
 
-    X_test = test[
-        FEATURE_COLUMNS
-    ].fillna(0)
+    X_test = (
+        test[
+            FEATURE_COLUMNS
+        ]
+        .fillna(0)
+    )
 
     y_test = test[
         "next_week_fantasy_points"
     ]
 
-    model = XGBRegressor(
-        n_estimators=300,
-        max_depth=4,
-        learning_rate=0.03,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        objective="reg:squarederror",
-        random_state=42,
-    )
+    model = create_model()
 
     model.fit(
         X_train,
@@ -110,7 +120,8 @@ def train_and_evaluate(
 
     importance = pd.DataFrame(
         {
-            "feature": FEATURE_COLUMNS,
+            "feature":
+                FEATURE_COLUMNS,
             "importance":
                 model.feature_importances_,
         }
@@ -128,30 +139,29 @@ def train_and_evaluate(
         "train_size": len(train),
         "test_size": len(test),
     }
-def train_production_model(features):
+
+
+def train_production_model(
+    features
+):
     training_data = features[
         features[
             "next_week_fantasy_points"
         ].notna()
     ].copy()
 
-    X_train = training_data[
-        FEATURE_COLUMNS
-    ].fillna(0)
+    X_train = (
+        training_data[
+            FEATURE_COLUMNS
+        ]
+        .fillna(0)
+    )
 
     y_train = training_data[
         "next_week_fantasy_points"
     ]
 
-    model = XGBRegressor(
-        n_estimators=300,
-        max_depth=4,
-        learning_rate=0.03,
-        subsample=0.8,
-        colsample_bytree=0.8,
-        objective="reg:squarederror",
-        random_state=42,
-    )
+    model = create_model()
 
     model.fit(
         X_train,
@@ -167,27 +177,35 @@ def predict_next_week(
     season=2026
 ):
     season_data = features[
-        features["season"] == season
+        features["season"]
+        == season
     ].copy()
 
-    latest_rows = (
-        season_data
-        .sort_values(
-            [
-                "player_id",
-                "week",
-            ]
+    if season_data.empty:
+        raise ValueError(
+            f"No data found for "
+            f"season {season}."
         )
-        .groupby(
-            "player_id"
-        )
-        .tail(1)
-        .copy()
+
+    # Use one consistent NFL week for
+    # every breakout candidate.
+    latest_week = int(
+        season_data[
+            "week"
+        ].max()
     )
 
-    X_latest = latest_rows[
-        FEATURE_COLUMNS
-    ].fillna(0)
+    latest_rows = season_data[
+        season_data["week"]
+        == latest_week
+    ].copy()
+
+    X_latest = (
+        latest_rows[
+            FEATURE_COLUMNS
+        ]
+        .fillna(0)
+    )
 
     latest_rows[
         "projected_points"
