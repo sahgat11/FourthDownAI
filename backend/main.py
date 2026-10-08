@@ -9,6 +9,11 @@ from baseline_model import (
 )
 from ml_model import (
     train_and_evaluate,
+    train_production_model,
+    predict_next_week,
+)
+from breakout_engine import (
+    calculate_breakout_scores,
 )
 
 
@@ -31,23 +36,11 @@ def main():
 
     print()
     print("FourthDown AI")
-    print("=" * 60)
+    print("=" * 70)
 
     print()
-    print("MODEL COMPARISON")
-    print("-" * 60)
-
-    print(
-        f"Training records: "
-        f"{ml['train_size']}"
-    )
-
-    print(
-        f"Test records:     "
-        f"{ml['test_size']}"
-    )
-
-    print()
+    print("MODEL PERFORMANCE")
+    print("-" * 70)
 
     print(
         f"Baseline MAE: "
@@ -59,18 +52,6 @@ def main():
         f"{ml['mae']:.2f}"
     )
 
-    print()
-
-    print(
-        f"Baseline RMSE: "
-        f"{baseline['rmse']:.2f}"
-    )
-
-    print(
-        f"XGBoost RMSE:  "
-        f"{ml['rmse']:.2f}"
-    )
-
     improvement = (
         (
             baseline["mae"]
@@ -80,46 +61,67 @@ def main():
         * 100
     )
 
-    print()
     print(
-        f"MAE improvement: "
+        f"Improvement:  "
         f"{improvement:.1f}%"
     )
 
-    print()
-    print("Most important features:")
-    print()
+    # Train model on every week for which
+    # the following week's result is known.
+    production_model = (
+        train_production_model(
+            features
+        )
+    )
 
-    print(
-        ml["importance"]
-        .head(10)
-        .to_string(
-            index=False
+    predictions = predict_next_week(
+        features,
+        production_model,
+        season=2026
+    )
+
+    breakouts = (
+        calculate_breakout_scores(
+            predictions
         )
     )
 
     print()
-    print("Largest XGBoost misses:")
-    print()
+    print("BREAKOUT WATCH")
+    print("-" * 70)
 
     columns = [
         "player_display_name",
         "position",
+        "team",
         "week",
-        "ml_prediction",
-        "next_week_fantasy_points",
-        "ml_error",
+        "fantasy_points_ppr_avg_3",
+        "projected_points",
+        "projection_gain",
+        "breakout_score",
+    ]
+
+    top_breakouts = (
+        breakouts[
+            columns
+        ]
+        .head(15)
+        .copy()
+    )
+
+    top_breakouts.columns = [
+        "Player",
+        "Pos",
+        "Team",
+        "Week",
+        "Last 3 Avg",
+        "Projection",
+        "Expected Gain",
+        "Breakout Score",
     ]
 
     print(
-        ml["predictions"]
-        .sort_values(
-            "ml_error",
-            ascending=False
-        )
-        .head(10)
-        [columns]
-        .to_string(
+        top_breakouts.to_string(
             index=False
         )
     )
