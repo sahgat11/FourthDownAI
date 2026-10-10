@@ -16,6 +16,7 @@ from ml_model import (
     train_and_evaluate,
     train_production_model,
     predict_next_week,
+    predict_player_pool,
 )
 
 from breakout_engine import (
@@ -26,10 +27,16 @@ from sleeper_client import (
     get_league,
     get_nfl_players,
     get_owned_player_ids,
+    get_user,
+    get_user_roster,
 )
 
 from waiver_engine import (
     find_available_breakouts,
+)
+
+from team_engine import (
+    build_team_roster,
 )
 
 
@@ -177,6 +184,60 @@ def print_waivers(
     )
 
 
+def print_my_team(
+    team,
+    username
+):
+    print()
+    print(
+        f"FOURTHDOWN AI - "
+        f"MY TEAM ({username})"
+    )
+
+    print("-" * 70)
+    print()
+
+    if team.empty:
+        print(
+            "No roster players found."
+        )
+
+        return
+
+    display = team[
+        [
+            "slot",
+            "player",
+            "position",
+            "team",
+            "roster_status",
+            "data_week",
+            "recent_avg",
+            "projected_points",
+            "match_method",
+        ]
+    ].copy()
+
+    display.columns = [
+        "Slot",
+        "Player",
+        "Pos",
+        "Team",
+        "Status",
+        "Data Week",
+        "Last 3 Avg",
+        "Projection",
+        "Match",
+    ]
+
+    print(
+        display.to_string(
+            index=False,
+            na_rep="N/A"
+        )
+    )
+
+
 def main():
     parser = argparse.ArgumentParser(
         description=(
@@ -188,9 +249,15 @@ def main():
     parser.add_argument(
         "--league-id",
         help=(
-            "Sleeper league ID used "
-            "to generate waiver "
-            "recommendations."
+            "Sleeper league ID."
+        )
+    )
+
+    parser.add_argument(
+        "--username",
+        help=(
+            "Sleeper username used "
+            "for My Team analysis."
         )
     )
 
@@ -227,10 +294,20 @@ def main():
         )
     )
 
+    # Current-week players for Breakout Watch.
     predictions = predict_next_week(
         features,
         production_model,
         season=2026
+    )
+
+    # Latest available row for every player.
+    player_pool_predictions = (
+        predict_player_pool(
+            features,
+            production_model,
+            season=2026
+        )
     )
 
     current_week = int(
@@ -254,8 +331,8 @@ def main():
         print()
         print(
             "Tip: Add --league-id "
-            "to generate recommendations "
-            "for your Sleeper league."
+            "for Sleeper waiver "
+            "recommendations."
         )
 
         return
@@ -291,6 +368,58 @@ def main():
         waivers,
         league,
         current_week
+    )
+
+    if not args.username:
+        print()
+        print(
+            "Tip: Add --username "
+            "for My Team analysis."
+        )
+
+        return
+
+    user = get_user(
+        args.username
+    )
+
+    if not user:
+        print()
+        print(
+            f"Sleeper user "
+            f"'{args.username}' "
+            f"not found."
+        )
+
+        return
+
+    roster = get_user_roster(
+        args.league_id,
+        user[
+            "user_id"
+        ]
+    )
+
+    if not roster:
+        print()
+        print(
+            "Could not find this "
+            "user's roster in the "
+            "selected league."
+        )
+
+        return
+
+    team = build_team_roster(
+        roster,
+        league,
+        sleeper_players,
+        player_pool_predictions,
+    )
+
+    print_my_team(
+        team,
+        args.username
     )
 
 

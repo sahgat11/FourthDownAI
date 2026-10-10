@@ -171,11 +171,48 @@ def train_production_model(
     return model
 
 
+def add_predictions(
+    rows,
+    model
+):
+    rows = rows.copy()
+
+    if rows.empty:
+        rows[
+            "projected_points"
+        ] = []
+
+        return rows
+
+    X = (
+        rows[
+            FEATURE_COLUMNS
+        ]
+        .fillna(0)
+    )
+
+    rows[
+        "projected_points"
+    ] = model.predict(
+        X
+    )
+
+    return rows
+
+
 def predict_next_week(
     features,
     model,
     season=2026
 ):
+    """
+    Used for Breakout Watch.
+
+    Only players with data from the most recent
+    NFL week are included so stale players do
+    not appear as current breakout candidates.
+    """
+
     season_data = features[
         features["season"]
         == season
@@ -187,8 +224,6 @@ def predict_next_week(
             f"season {season}."
         )
 
-    # Use one consistent NFL week for
-    # every breakout candidate.
     latest_week = int(
         season_data[
             "week"
@@ -200,17 +235,53 @@ def predict_next_week(
         == latest_week
     ].copy()
 
-    X_latest = (
-        latest_rows[
-            FEATURE_COLUMNS
-        ]
-        .fillna(0)
+    return add_predictions(
+        latest_rows,
+        model
     )
 
-    latest_rows[
-        "projected_points"
-    ] = model.predict(
-        X_latest
+
+def predict_player_pool(
+    features,
+    model,
+    season=2026
+):
+    """
+    Used for roster analysis.
+
+    Takes each player's most recent available
+    stat row rather than requiring them to have
+    played in the latest NFL week.
+    """
+
+    season_data = features[
+        features["season"]
+        == season
+    ].copy()
+
+    if season_data.empty:
+        raise ValueError(
+            f"No data found for "
+            f"season {season}."
+        )
+
+    latest_rows = (
+        season_data
+        .sort_values(
+            [
+                "player_id",
+                "week",
+            ]
+        )
+        .groupby(
+            "player_id",
+            as_index=False
+        )
+        .tail(1)
+        .copy()
     )
 
-    return latest_rows
+    return add_predictions(
+        latest_rows,
+        model
+    )

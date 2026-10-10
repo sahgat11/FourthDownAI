@@ -69,6 +69,39 @@ def get_league_users(league_id):
     )
 
 
+def get_user_roster(
+    league_id,
+    user_id
+):
+    rosters = get_rosters(
+        league_id
+    )
+
+    for roster in rosters:
+        owner_id = roster.get(
+            "owner_id"
+        )
+
+        co_owners = (
+            roster.get(
+                "co_owners"
+            )
+            or []
+        )
+
+        if (
+            str(owner_id) == str(user_id)
+            or str(user_id)
+            in [
+                str(owner)
+                for owner in co_owners
+            ]
+        ):
+            return roster
+
+    return None
+
+
 def get_nfl_players(
     force_refresh=False
 ):
