@@ -2,6 +2,13 @@ import re
 import unicodedata
 
 
+SKILL_POSITIONS = {
+    "RB",
+    "WR",
+    "TE",
+}
+
+
 def normalize_name(name):
     if not name:
         return ""
@@ -134,7 +141,7 @@ def build_owned_player_sets(
             owned_name_keys.add(
                 create_player_key(
                     name,
-                    position
+                    position,
                 )
             )
 
@@ -144,70 +151,308 @@ def build_owned_player_sets(
     )
 
 
-def find_available_breakouts(
+def is_player_rostered(
+    row,
+    owned_gsis_ids,
+    owned_name_keys,
+):
+    nfl_id = row.get(
+        "player_id"
+    )
+
+    if nfl_id is not None:
+        if (
+            str(nfl_id)
+            in owned_gsis_ids
+        ):
+            return True
+
+    name_key = create_player_key(
+        row[
+            "player_display_name"
+        ],
+        row[
+            "position"
+        ],
+    )
+
+    return (
+        name_key
+        in owned_name_keys
+    )
+
+
+def build_breakout_lookup(
+    breakouts
+):
+    id_lookup = {}
+    name_lookup = {}
+
+    if breakouts.empty:
+        return (
+            id_lookup,
+            name_lookup,
+        )
+
+    for _, row in (
+        breakouts.iterrows()
+    ):
+        player_id = row.get(
+            "player_id"
+        )
+
+        if player_id is not None:
+            id_lookup[
+                str(player_id)
+            ] = float(
+                row[
+                    "breakout_score"
+                ]
+            )
+
+        key = create_player_key(
+            row[
+                "player_display_name"
+            ],
+            row[
+                "position"
+            ],
+        )
+
+        name_lookup[
+            key
+        ] = float(
+            row[
+                "breakout_score"
+            ]
+        )
+
+    return (
+        id_lookup,
+        name_lookup,
+    )
+
+
+def get_breakout_score(
+    row,
+    id_lookup,
+    name_lookup,
+):
+    player_id = row.get(
+        "player_id"
+    )
+
+    if player_id is not None:
+        score = id_lookup.get(
+            str(player_id)
+        )
+
+        if score is not None:
+            return score
+
+    key = create_player_key(
+        row[
+            "player_display_name"
+        ],
+        row[
+            "position"
+        ],
+    )
+
+    return float(
+        name_lookup.get(
+            key,
+            0.0,
+        )
+    )
+
+
+def percentile_score(
+    series
+):
+    if len(series) == 1:
+        return series * 0 + 1.0
+
+    return series.rank(
+        pct=True,
+        method="average",
+    )
+
+
+def find_available_players(
+    player_pool,
     breakouts,
     sleeper_players,
-    owned_player_ids
+    owned_player_ids,
+    completed_week,
+    min_projection=5.0,
+    max_data_age_weeks=1,
 ):
-    players = breakouts.copy()
+    """
+    Build a complete waiver pool.
+
+    Unlike Breakout Watch, a player does
+    NOT need to be trending upward to be
+    considered here.
+    """
+
+    players = player_pool.copy()
+
+    # Only positions currently supported
+    # by FourthDown's ML model.
+    players = players[
+        players[
+            "position"
+        ].isin(
+            SKILL_POSITIONS
+        )
+    ].copy()
+
+    players = players[
+        players[
+            "projected_points"
+        ].notna()
+    ].copy()
+
+    # Remove very low-value candidates.
+    players = players[
+        players[
+            "projected_points"
+        ]
+        >= min_projection
+    ].copy()
+
+    # Avoid recommending players whose
+    # most recent data is very stale.
+    minimum_week = (
+        completed_week
+        - max_data_age_weeks
+    )
+
+    players = players[
+        players["week"]
+        >= minimum_week
+    ].copy()
 
     (
         owned_gsis_ids,
         owned_name_keys,
     ) = build_owned_player_sets(
         sleeper_players,
-        owned_player_ids
+        owned_player_ids,
     )
-
-    def is_rostered(row):
-        # Best match:
-        # nflverse player_id ↔ Sleeper gsis_id
-        nfl_id = row.get(
-            "player_id"
-        )
-
-        if nfl_id is not None:
-            nfl_id = str(
-                nfl_id
-            )
-
-            if nfl_id in owned_gsis_ids:
-                return True
-
-        # Fallback for players whose IDs
-        # don't line up across providers.
-        name_key = create_player_key(
-            row[
-                "player_display_name"
-            ],
-            row[
-                "position"
-            ]
-        )
-
-        return (
-            name_key
-            in owned_name_keys
-        )
 
     players[
         "is_rostered"
     ] = players.apply(
-        is_rostered,
-        axis=1
+        lambda row:
+        is_player_rostered(
+            row,
+            owned_gsis_ids,
+            owned_name_keys,
+        ),
+        axis=1,
     )
 
+    # Only true free agents remain.
     available = players[
         ~players[
             "is_rostered"
         ]
     ].copy()
 
+    if available.empty:
+        return available
+
+    # Attach Breakout Score as an
+    # additional signal rather than
+    # requiring it.
+    (
+        breakout_id_lookup,
+        breakout_name_lookup,
+    ) = build_breakout_lookup(
+        breakouts
+    )
+
+    available[
+        "breakout_score"
+    ] = available.apply(
+        lambda row:
+        get_breakout_score(
+            row,
+            breakout_id_lookup,
+            breakout_name_lookup,
+        ),
+        axis=1,
+    )
+
+    available[
+        "is_breakout"
+    ] = (
+        available[
+            "breakout_score"
+        ]
+        > 0
+    )
+
+    # General waiver value should mostly
+    # reflect projected fantasy production.
+    #
+    # Breakout status is useful, but it is
+    # only one part of the ranking.
+    available[
+        "projection_rank"
+    ] = percentile_score(
+        available[
+            "projected_points"
+        ]
+    )
+
+    available[
+        "recent_rank"
+    ] = percentile_score(
+        available[
+            "fantasy_points_ppr_avg_3"
+        ].fillna(0)
+    )
+
+    available[
+        "breakout_rank"
+    ] = (
+        available[
+            "breakout_score"
+        ]
+        / 100.0
+    )
+
+    available[
+        "waiver_score"
+    ] = (
+        (
+            0.70
+            * available[
+                "projection_rank"
+            ]
+        )
+        + (
+            0.20
+            * available[
+                "recent_rank"
+            ]
+        )
+        + (
+            0.10
+            * available[
+                "breakout_rank"
+            ]
+        )
+    ) * 100
+
     available[
         "waiver_score"
     ] = (
         available[
-            "breakout_score"
+            "waiver_score"
         ]
         .round(1)
     )
@@ -222,7 +467,7 @@ def find_available_breakouts(
             ascending=[
                 False,
                 False,
-            ]
+            ],
         )
     )
 

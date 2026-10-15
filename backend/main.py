@@ -32,7 +32,7 @@ from sleeper_client import (
 )
 
 from waiver_engine import (
-    find_available_breakouts,
+    find_available_players,
 )
 
 from team_engine import (
@@ -107,6 +107,7 @@ def print_breakouts(
             "No qualifying breakout "
             "candidates found."
         )
+
         return
 
     columns = [
@@ -155,7 +156,7 @@ def print_waivers(
         f"- WEEK {completed_week + 1}"
     )
 
-    print("-" * 70)
+    print("-" * 90)
 
     print(
         f"League: "
@@ -169,38 +170,37 @@ def print_waivers(
             "No qualifying waiver "
             "candidates found."
         )
+
         return
 
-    columns = [
-        "player_display_name",
-        "position",
-        "team",
-        "fantasy_points_ppr_avg_3",
-        "projected_points",
-        "projection_gain",
-        "breakout_score",
-    ]
-
-    top_waivers = (
-        waivers[
-            columns
+    display = waivers[
+        [
+            "player_display_name",
+            "position",
+            "team",
+            "week",
+            "fantasy_points_ppr_avg_3",
+            "projected_points",
+            "breakout_score",
+            "waiver_score",
         ]
-        .head(15)
-        .copy()
-    )
+    ].head(
+        15
+    ).copy()
 
-    top_waivers.columns = [
+    display.columns = [
         "Player",
         "Pos",
         "Team",
+        "Data Week",
         "Last 3 Avg",
         "Projection",
-        "Expected Gain",
+        "Breakout",
         "Waiver Score",
     ]
 
     print(
-        top_waivers.to_string(
+        display.to_string(
             index=False
         )
     )
@@ -223,6 +223,7 @@ def print_my_team(
         print(
             "No roster players found."
         )
+
         return
 
     display = team[
@@ -279,6 +280,7 @@ def print_recommended_moves(
             "No meaningful add/drop "
             "upgrades found."
         )
+
         return
 
     for number, (
@@ -440,6 +442,8 @@ def main():
         )
     )
 
+    # Current completed week only.
+    # Used for breakout detection.
     predictions = predict_next_week(
         features,
         production_model,
@@ -447,6 +451,9 @@ def main():
         completed_week=completed_week,
     )
 
+    # Most recent usable row for
+    # every player.
+    # Used for general roster/waiver value.
     player_pool_predictions = (
         predict_player_pool(
             features,
@@ -474,6 +481,7 @@ def main():
             "for Sleeper waiver "
             "recommendations."
         )
+
         return
 
     print()
@@ -495,12 +503,18 @@ def main():
         get_nfl_players()
     )
 
-    waivers = (
-        find_available_breakouts(
-            breakouts,
-            sleeper_players,
-            owned_player_ids,
-        )
+    # IMPORTANT:
+    # Waiver pool now starts with every
+    # projected RB/WR/TE, NOT only players
+    # that passed Breakout Watch.
+    waivers = find_available_players(
+        player_pool_predictions,
+        breakouts,
+        sleeper_players,
+        owned_player_ids,
+        completed_week,
+        min_projection=5.0,
+        max_data_age_weeks=1,
     )
 
     print_waivers(
@@ -515,6 +529,7 @@ def main():
             "Tip: Add --username "
             "for My Team analysis."
         )
+
         return
 
     user = get_user(
@@ -528,6 +543,7 @@ def main():
             f"'{args.username}' "
             f"not found."
         )
+
         return
 
     roster = get_user_roster(
@@ -542,6 +558,7 @@ def main():
             "user's roster in the "
             "selected league."
         )
+
         return
 
     team = build_team_roster(
