@@ -65,59 +65,83 @@ def create_player_key(
     )
 
 
-def get_owned_player_keys(
+def get_sleeper_full_name(
+    player
+):
+    full_name = player.get(
+        "full_name"
+    )
+
+    if full_name:
+        return full_name
+
+    first_name = (
+        player.get(
+            "first_name"
+        )
+        or ""
+    )
+
+    last_name = (
+        player.get(
+            "last_name"
+        )
+        or ""
+    )
+
+    return (
+        f"{first_name} {last_name}"
+        .strip()
+    )
+
+
+def build_owned_player_sets(
     sleeper_players,
     owned_player_ids
 ):
-    owned_keys = set()
+    owned_gsis_ids = set()
+    owned_name_keys = set()
 
-    for player_id in owned_player_ids:
+    for sleeper_id in owned_player_ids:
         player = sleeper_players.get(
-            str(player_id)
+            str(sleeper_id)
         )
 
         if not player:
             continue
 
-        full_name = player.get(
-            "full_name"
+        gsis_id = player.get(
+            "gsis_id"
         )
 
-        if not full_name:
-            first_name = (
-                player.get(
-                    "first_name"
-                )
-                or ""
+        if gsis_id:
+            owned_gsis_ids.add(
+                str(gsis_id)
             )
 
-            last_name = (
-                player.get(
-                    "last_name"
-                )
-                or ""
-            )
-
-            full_name = (
-                f"{first_name} "
-                f"{last_name}"
-            ).strip()
+        name = get_sleeper_full_name(
+            player
+        )
 
         position = player.get(
             "position"
         )
 
-        if not full_name or not position:
-            continue
-
-        owned_keys.add(
-            create_player_key(
-                full_name,
-                position
+        if (
+            name
+            and position
+        ):
+            owned_name_keys.add(
+                create_player_key(
+                    name,
+                    position
+                )
             )
-        )
 
-    return owned_keys
+    return (
+        owned_gsis_ids,
+        owned_name_keys,
+    )
 
 
 def find_available_breakouts(
@@ -127,30 +151,50 @@ def find_available_breakouts(
 ):
     players = breakouts.copy()
 
-    owned_keys = get_owned_player_keys(
+    (
+        owned_gsis_ids,
+        owned_name_keys,
+    ) = build_owned_player_sets(
         sleeper_players,
         owned_player_ids
     )
 
-    players[
-        "match_key"
-    ] = players.apply(
-        lambda row:
-        create_player_key(
+    def is_rostered(row):
+        # Best match:
+        # nflverse player_id ↔ Sleeper gsis_id
+        nfl_id = row.get(
+            "player_id"
+        )
+
+        if nfl_id is not None:
+            nfl_id = str(
+                nfl_id
+            )
+
+            if nfl_id in owned_gsis_ids:
+                return True
+
+        # Fallback for players whose IDs
+        # don't line up across providers.
+        name_key = create_player_key(
             row[
                 "player_display_name"
             ],
-            row["position"]
-        ),
-        axis=1
-    )
+            row[
+                "position"
+            ]
+        )
+
+        return (
+            name_key
+            in owned_name_keys
+        )
 
     players[
         "is_rostered"
-    ] = players[
-        "match_key"
-    ].isin(
-        owned_keys
+    ] = players.apply(
+        is_rostered,
+        axis=1
     )
 
     available = players[
@@ -164,14 +208,6 @@ def find_available_breakouts(
     ] = (
         available[
             "breakout_score"
-        ]
-    )
-
-    available[
-        "waiver_score"
-    ] = (
-        available[
-            "waiver_score"
         ]
         .round(1)
     )

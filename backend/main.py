@@ -102,6 +102,13 @@ def print_breakouts(
     print("-" * 70)
     print()
 
+    if breakouts.empty:
+        print(
+            "No qualifying breakout "
+            "candidates found."
+        )
+        return
+
     columns = [
         "player_display_name",
         "position",
@@ -157,6 +164,13 @@ def print_waivers(
 
     print()
 
+    if waivers.empty:
+        print(
+            "No qualifying waiver "
+            "candidates found."
+        )
+        return
+
     columns = [
         "player_display_name",
         "position",
@@ -185,14 +199,6 @@ def print_waivers(
         "Waiver Score",
     ]
 
-    if top_waivers.empty:
-        print(
-            "No qualifying waiver "
-            "candidates found."
-        )
-
-        return
-
     print(
         top_waivers.to_string(
             index=False
@@ -217,7 +223,6 @@ def print_my_team(
         print(
             "No roster players found."
         )
-
         return
 
     display = team[
@@ -274,17 +279,22 @@ def print_recommended_moves(
             "No meaningful add/drop "
             "upgrades found."
         )
-
         return
 
-    for index, move in (
-        moves.iterrows()
+    for number, (
+        _,
+        move,
+    ) in enumerate(
+        moves.iterrows(),
+        start=1,
     ):
-        number = index + 1
-
         print(
             f"{number}. "
-            f"ADD "
+            f"{move['move_type']}"
+        )
+
+        print(
+            f"   ADD  "
             f"{move['add_player']} "
             f"({move['add_position']}, "
             f"{move['add_team']})"
@@ -297,29 +307,62 @@ def print_recommended_moves(
             f"{move['drop_team']})"
         )
 
+        print()
+
         print(
-            f"   Add projection:  "
+            f"   Add projection:       "
             f"{move['add_projection']:.2f}"
         )
 
         print(
-            f"   Drop projection: "
+            f"   Drop projection:      "
             f"{move['drop_projection']:.2f}"
         )
 
         print(
-            f"   Projected gain:  "
-            f"+{move['projected_gain']:.2f}"
+            f"   Roster asset gain:    "
+            f"{move['asset_gain']:+.2f}"
         )
 
         print(
-            f"   Breakout score:  "
+            f"   Starting lineup gain: "
+            f"{move['starter_gain']:+.2f}"
+        )
+
+        print(
+            f"   Current lineup:       "
+            f"{move['current_lineup_projection']:.2f}"
+        )
+
+        print(
+            f"   New lineup:           "
+            f"{move['new_lineup_projection']:.2f}"
+        )
+
+        print(
+            f"   Breakout score:       "
             f"{move['breakout_score']:.1f}"
         )
 
+        if (
+            move[
+                "depth_penalty"
+            ]
+            > 0
+        ):
+            print(
+                f"   Depth penalty:        "
+                f"{move['depth_penalty']:.1f}"
+            )
+
         print(
-            f"   Confidence:      "
+            f"   Confidence:           "
             f"{move['confidence']}"
+        )
+
+        print(
+            f"   Why: "
+            f"{move['reason']}"
         )
 
         print()
@@ -431,7 +474,6 @@ def main():
             "for Sleeper waiver "
             "recommendations."
         )
-
         return
 
     print()
@@ -473,7 +515,6 @@ def main():
             "Tip: Add --username "
             "for My Team analysis."
         )
-
         return
 
     user = get_user(
@@ -487,7 +528,6 @@ def main():
             f"'{args.username}' "
             f"not found."
         )
-
         return
 
     roster = get_user_roster(
@@ -502,7 +542,6 @@ def main():
             "user's roster in the "
             "selected league."
         )
-
         return
 
     team = build_team_roster(
@@ -521,7 +560,6 @@ def main():
         generate_add_drop_recommendations(
             team,
             waivers,
-            min_projected_gain=1.5,
             max_recommendations=5,
         )
     )
