@@ -41,7 +41,8 @@ def create_model():
 
 def train_and_evaluate(
     features,
-    test_season=2026
+    test_season=2026,
+    max_target_week=None,
 ):
     data = features[
         features[
@@ -56,6 +57,14 @@ def train_and_evaluate(
     test = data[
         data["season"] == test_season
     ].copy()
+
+    # Avoid evaluating against results from
+    # a week that is only partially complete.
+    if max_target_week is not None:
+        test = test[
+            test["week"]
+            < max_target_week
+        ].copy()
 
     X_train = (
         train[
@@ -83,7 +92,7 @@ def train_and_evaluate(
 
     model.fit(
         X_train,
-        y_train
+        y_train,
     )
 
     predictions = model.predict(
@@ -92,13 +101,13 @@ def train_and_evaluate(
 
     mae = mean_absolute_error(
         y_test,
-        predictions
+        predictions,
     )
 
     rmse = (
         mean_squared_error(
             y_test,
-            predictions
+            predictions,
         )
         ** 0.5
     )
@@ -127,7 +136,7 @@ def train_and_evaluate(
         }
     ).sort_values(
         "importance",
-        ascending=False
+        ascending=False,
     )
 
     return {
@@ -142,13 +151,38 @@ def train_and_evaluate(
 
 
 def train_production_model(
-    features
+    features,
+    season=2026,
+    completed_week=None,
 ):
     training_data = features[
         features[
             "next_week_fantasy_points"
         ].notna()
     ].copy()
+
+    # Prevent partially completed weeks
+    # from leaking future results into
+    # the production model.
+    if completed_week is not None:
+        training_data = training_data[
+            (
+                training_data["season"]
+                < season
+            )
+            |
+            (
+                (
+                    training_data["season"]
+                    == season
+                )
+                &
+                (
+                    training_data["week"]
+                    < completed_week
+                )
+            )
+        ].copy()
 
     X_train = (
         training_data[
@@ -165,7 +199,7 @@ def train_production_model(
 
     model.fit(
         X_train,
-        y_train
+        y_train,
     )
 
     return model
@@ -173,7 +207,7 @@ def train_production_model(
 
 def add_predictions(
     rows,
-    model
+    model,
 ):
     rows = rows.copy()
 
@@ -203,16 +237,9 @@ def add_predictions(
 def predict_next_week(
     features,
     model,
-    season=2026
+    season=2026,
+    completed_week=None,
 ):
-    """
-    Used for Breakout Watch.
-
-    Only players with data from the most recent
-    NFL week are included so stale players do
-    not appear as current breakout candidates.
-    """
-
     season_data = features[
         features["season"]
         == season
@@ -220,40 +247,31 @@ def predict_next_week(
 
     if season_data.empty:
         raise ValueError(
-            f"No data found for "
-            f"season {season}."
+            f"No data found for season {season}."
         )
 
-    latest_week = int(
-        season_data[
-            "week"
-        ].max()
-    )
+    if completed_week is None:
+        completed_week = int(
+            season_data["week"].max()
+        )
 
-    latest_rows = season_data[
+    week_rows = season_data[
         season_data["week"]
-        == latest_week
+        == completed_week
     ].copy()
 
     return add_predictions(
-        latest_rows,
-        model
+        week_rows,
+        model,
     )
 
 
 def predict_player_pool(
     features,
     model,
-    season=2026
+    season=2026,
+    completed_week=None,
 ):
-    """
-    Used for roster analysis.
-
-    Takes each player's most recent available
-    stat row rather than requiring them to have
-    played in the latest NFL week.
-    """
-
     season_data = features[
         features["season"]
         == season
@@ -261,10 +279,19 @@ def predict_player_pool(
 
     if season_data.empty:
         raise ValueError(
-            f"No data found for "
-            f"season {season}."
+            f"No data found for season {season}."
         )
 
+    # Ignore data after the last
+    # completed NFL week.
+    if completed_week is not None:
+        season_data = season_data[
+            season_data["week"]
+            <= completed_week
+        ].copy()
+
+    # For roster analysis, use each
+    # player's latest available game.
     latest_rows = (
         season_data
         .sort_values(
@@ -275,7 +302,7 @@ def predict_player_pool(
         )
         .groupby(
             "player_id",
-            as_index=False
+            as_index=False,
         )
         .tail(1)
         .copy()
@@ -283,5 +310,5 @@ def predict_player_pool(
 
     return add_predictions(
         latest_rows,
-        model
+        model,
     )

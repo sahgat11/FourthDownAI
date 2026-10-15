@@ -39,14 +39,30 @@ from team_engine import (
     build_team_roster,
 )
 
+from move_engine import (
+    generate_add_drop_recommendations,
+)
+
+from week_utils import (
+    get_latest_complete_week,
+)
+
+
+SEASON = 2026
+
 
 def print_model_performance(
     baseline,
-    ml
+    ml,
 ):
     print()
     print("MODEL PERFORMANCE")
     print("-" * 70)
+
+    print(
+        f"Test records: "
+        f"{ml['test_size']}"
+    )
 
     print(
         f"Baseline MAE: "
@@ -75,12 +91,12 @@ def print_model_performance(
 
 def print_breakouts(
     breakouts,
-    current_week
+    completed_week,
 ):
     print()
     print(
         f"BREAKOUT WATCH - "
-        f"AFTER WEEK {current_week}"
+        f"AFTER WEEK {completed_week}"
     )
 
     print("-" * 70)
@@ -124,12 +140,12 @@ def print_breakouts(
 def print_waivers(
     waivers,
     league,
-    current_week
+    completed_week,
 ):
     print()
     print(
         f"FOURTHDOWN AI WAIVER WIRE "
-        f"- WEEK {current_week + 1}"
+        f"- WEEK {completed_week + 1}"
     )
 
     print("-" * 70)
@@ -186,7 +202,7 @@ def print_waivers(
 
 def print_my_team(
     team,
-    username
+    username,
 ):
     print()
     print(
@@ -233,9 +249,80 @@ def print_my_team(
     print(
         display.to_string(
             index=False,
-            na_rep="N/A"
+            na_rep="N/A",
         )
     )
+
+
+def print_recommended_moves(
+    moves,
+    completed_week,
+):
+    print()
+    print(
+        f"FOURTHDOWN AI - "
+        f"RECOMMENDED MOVES "
+        f"FOR WEEK "
+        f"{completed_week + 1}"
+    )
+
+    print("=" * 70)
+    print()
+
+    if moves.empty:
+        print(
+            "No meaningful add/drop "
+            "upgrades found."
+        )
+
+        return
+
+    for index, move in (
+        moves.iterrows()
+    ):
+        number = index + 1
+
+        print(
+            f"{number}. "
+            f"ADD "
+            f"{move['add_player']} "
+            f"({move['add_position']}, "
+            f"{move['add_team']})"
+        )
+
+        print(
+            f"   DROP "
+            f"{move['drop_player']} "
+            f"({move['drop_position']}, "
+            f"{move['drop_team']})"
+        )
+
+        print(
+            f"   Add projection:  "
+            f"{move['add_projection']:.2f}"
+        )
+
+        print(
+            f"   Drop projection: "
+            f"{move['drop_projection']:.2f}"
+        )
+
+        print(
+            f"   Projected gain:  "
+            f"+{move['projected_gain']:.2f}"
+        )
+
+        print(
+            f"   Breakout score:  "
+            f"{move['breakout_score']:.1f}"
+        )
+
+        print(
+            f"   Confidence:      "
+            f"{move['confidence']}"
+        )
+
+        print()
 
 
 def main():
@@ -250,7 +337,7 @@ def main():
         "--league-id",
         help=(
             "Sleeper league ID."
-        )
+        ),
     )
 
     parser.add_argument(
@@ -258,7 +345,7 @@ def main():
         help=(
             "Sleeper username used "
             "for My Team analysis."
-        )
+        ),
     )
 
     args = parser.parse_args()
@@ -269,51 +356,61 @@ def main():
         stats
     )
 
+    completed_week = (
+        get_latest_complete_week(
+            features,
+            season=SEASON,
+        )
+    )
+
     baseline = evaluate_baseline(
         features,
-        test_season=2026
+        test_season=SEASON,
+        max_target_week=completed_week,
     )
 
     ml = train_and_evaluate(
         features,
-        test_season=2026
+        test_season=SEASON,
+        max_target_week=completed_week,
     )
 
     print()
     print("FourthDown AI")
     print("=" * 70)
 
+    print(
+        f"Latest completed data week: "
+        f"{completed_week}"
+    )
+
     print_model_performance(
         baseline,
-        ml
+        ml,
     )
 
     production_model = (
         train_production_model(
-            features
+            features,
+            season=SEASON,
+            completed_week=completed_week,
         )
     )
 
-    # Current-week players for Breakout Watch.
     predictions = predict_next_week(
         features,
         production_model,
-        season=2026
+        season=SEASON,
+        completed_week=completed_week,
     )
 
-    # Latest available row for every player.
     player_pool_predictions = (
         predict_player_pool(
             features,
             production_model,
-            season=2026
+            season=SEASON,
+            completed_week=completed_week,
         )
-    )
-
-    current_week = int(
-        predictions[
-            "week"
-        ].max()
     )
 
     breakouts = (
@@ -324,7 +421,7 @@ def main():
 
     print_breakouts(
         breakouts,
-        current_week
+        completed_week,
     )
 
     if not args.league_id:
@@ -360,14 +457,14 @@ def main():
         find_available_breakouts(
             breakouts,
             sleeper_players,
-            owned_player_ids
+            owned_player_ids,
         )
     )
 
     print_waivers(
         waivers,
         league,
-        current_week
+        completed_week,
     )
 
     if not args.username:
@@ -395,9 +492,7 @@ def main():
 
     roster = get_user_roster(
         args.league_id,
-        user[
-            "user_id"
-        ]
+        user["user_id"],
     )
 
     if not roster:
@@ -419,7 +514,21 @@ def main():
 
     print_my_team(
         team,
-        args.username
+        args.username,
+    )
+
+    moves = (
+        generate_add_drop_recommendations(
+            team,
+            waivers,
+            min_projected_gain=1.5,
+            max_recommendations=5,
+        )
+    )
+
+    print_recommended_moves(
+        moves,
+        completed_week,
     )
 
 
