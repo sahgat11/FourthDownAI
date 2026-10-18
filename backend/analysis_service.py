@@ -1,3 +1,4 @@
+import threading
 from functools import lru_cache
 
 from data_loader import (
@@ -51,17 +52,13 @@ from week_utils import (
 SEASON = 2026
 
 
+# Prevent multiple simultaneous API requests
+# from rebuilding the ML pipeline at once.
+_analysis_lock = threading.Lock()
+
+
 @lru_cache(maxsize=1)
-def get_base_analysis():
-    """
-    Load NFL data, build features, train the
-    models, and generate league-independent
-    predictions.
-
-    Cached so every API request does not
-    retrain XGBoost.
-    """
-
+def _build_base_analysis():
     print(
         "Building FourthDown AI "
         "analysis cache..."
@@ -149,6 +146,19 @@ def get_base_analysis():
         "breakouts":
             breakouts,
     }
+
+
+def get_base_analysis():
+    """
+    Return the cached league-independent
+    analysis.
+
+    The lock makes sure duplicate requests
+    cannot train multiple models at once.
+    """
+
+    with _analysis_lock:
+        return _build_base_analysis()
 
 
 def get_waiver_analysis(
@@ -266,4 +276,5 @@ def get_team_analysis(
 
 
 def clear_analysis_cache():
-    get_base_analysis.cache_clear()
+    with _analysis_lock:
+        _build_base_analysis.cache_clear()

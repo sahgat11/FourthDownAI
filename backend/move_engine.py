@@ -38,6 +38,27 @@ def get_slot_requirements(team):
     return requirements
 
 
+def get_latest_team_data_week(
+    team
+):
+    data_weeks = pd.to_numeric(
+        team["data_week"],
+        errors="coerce",
+    )
+
+    data_weeks = (
+        data_weeks
+        .dropna()
+    )
+
+    if data_weeks.empty:
+        return None
+
+    return int(
+        data_weeks.max()
+    )
+
+
 def optimize_skill_lineup(
     players,
     requirements,
@@ -387,9 +408,6 @@ def generate_add_drop_recommendations(
     ):
         return pd.DataFrame()
 
-    # Final safety check:
-    # never recommend a player who is
-    # already on the user's roster.
     team_player_keys = (
         get_team_player_keys(
             team
@@ -398,6 +416,12 @@ def generate_add_drop_recommendations(
 
     requirements = (
         get_slot_requirements(
+            team
+        )
+    )
+
+    latest_data_week = (
+        get_latest_team_data_week(
             team
         )
     )
@@ -438,6 +462,31 @@ def generate_add_drop_recommendations(
         )
     ].copy()
 
+    # Do not recommend dropping a player
+    # whose projection comes from stale data.
+    #
+    # A player missing the latest completed
+    # week could have been on bye, injured,
+    # inactive, etc. Their old row should not
+    # be interpreted as current low value.
+    if (
+        latest_data_week
+        is not None
+    ):
+        droppable_weeks = (
+            pd.to_numeric(
+                droppable[
+                    "data_week"
+                ],
+                errors="coerce",
+            )
+        )
+
+        droppable = droppable[
+            droppable_weeks
+            >= latest_data_week
+        ].copy()
+
     if droppable.empty:
         return pd.DataFrame()
 
@@ -461,8 +510,8 @@ def generate_add_drop_recommendations(
             )
         )
 
-        # Defense in depth against
-        # bad waiver matching.
+        # Final defense against a bad
+        # ownership match upstream.
         if (
             waiver_key
             in team_player_keys
