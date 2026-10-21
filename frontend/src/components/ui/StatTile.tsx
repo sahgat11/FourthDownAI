@@ -32,7 +32,7 @@ export function StatTile({
       <span className="flex items-baseline gap-1.5">
         <span
           className={cn(
-            "font-display text-4xl font-extrabold sm:text-5xl",
+            "font-display text-[2.5rem] leading-none font-extrabold xs:text-4xl sm:text-5xl",
             emphasis ? "text-ink" : "text-ink-2",
           )}
         >

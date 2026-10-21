@@ -11,9 +11,9 @@ export function Skeleton({ className }: { className?: string }) {
 }
 
 /** Placeholder rows shaped like the table that will replace them. */
-export function TableSkeleton({ rows = 8 }: { rows?: number }) {
+export function TableSkeleton({ rows = 8, label = "Loading data" }: { rows?: number; label?: string }) {
   return (
-    <div role="status" aria-label="Loading data" className="divide-y divide-rule rounded-lg border border-rule bg-surface">
+    <div role="status" aria-label={label} className="divide-y divide-rule rounded-lg border border-rule bg-surface">
       <div className="flex gap-4 bg-surface-sunk px-4 py-3">
         <Skeleton className="h-3 w-24" />
         <Skeleton className="ml-auto h-3 w-12" />

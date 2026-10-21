@@ -41,7 +41,7 @@ export default function OverviewPage() {
             {weeks[0]}–{weeks[weeks.length - 1]}, none of which the model saw in training.
           </p>
         </div>
-        <div className="grid gap-x-8 gap-y-8 sm:grid-cols-2 lg:grid-cols-4">
+        <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:gap-x-8 lg:grid-cols-4">
           <StatTile
             emphasis
             label="XGBoost mean absolute error"

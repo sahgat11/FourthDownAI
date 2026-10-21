@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { BreakoutsTable } from "@/components/players/BreakoutsTable";
+import { BreakoutsView } from "@/components/data/PlayerViews";
 import { breakouts, freshness, meta } from "@/lib/data";
 import { points } from "@/lib/format";
 
@@ -26,7 +26,7 @@ export default function BreakoutsPage() {
           </p>
         }
       />
-      <BreakoutsTable players={breakouts.players} />
+      <BreakoutsView />
       <section className="mt-8 grid gap-6 border-t border-rule pt-8 md:grid-cols-[1fr_2fr]">
         <h2 className="text-lg font-semibold">How the score works</h2>
         <div className="flex max-w-[62ch] flex-col gap-3 text-sm text-ink-2">

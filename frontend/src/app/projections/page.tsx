@@ -1,7 +1,7 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { ProjectionsExplorer } from "@/components/players/ProjectionsExplorer";
-import { freshness, meta, projections } from "@/lib/data";
+import { ProjectionsView } from "@/components/data/PlayerViews";
+import { freshness, meta } from "@/lib/data";
 
 export const metadata: Metadata = {
   title: `Week ${meta.projection_week} projections`,
@@ -21,7 +21,7 @@ export default function ProjectionsPage() {
           </p>
         }
       />
-      <ProjectionsExplorer players={projections.players} />
+      <ProjectionsView />
     </>
   );
 }

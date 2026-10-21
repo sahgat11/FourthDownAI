@@ -1,6 +1,6 @@
 import type { Metadata } from "next";
 import { PageHeader } from "@/components/layout/PageHeader";
-import { WaiversTable } from "@/components/players/WaiversTable";
+import { WaiversView } from "@/components/data/PlayerViews";
 import { freshness, meta, waivers } from "@/lib/data";
 import { points } from "@/lib/format";
 
@@ -32,7 +32,7 @@ export default function WaiversPage() {
           league&apos;s wire before claiming.
         </aside>
       </PageHeader>
-      <WaiversTable players={waivers.players} showAdds={availability.sleeper_trending} />
+      <WaiversView />
       <section className="mt-8 grid gap-6 border-t border-rule pt-8 md:grid-cols-[1fr_2fr]">
         <h2 className="text-lg font-semibold">How the score works</h2>
         <div className="flex max-w-[62ch] flex-col gap-3 text-sm text-ink-2">

@@ -22,7 +22,7 @@ export function SiteHeader() {
           <Wordmark />
         </Link>
         <nav aria-label="Main" className="order-last -mx-4 w-[calc(100%+2rem)] overflow-x-auto border-t border-rule px-4 sm:order-none sm:mx-0 sm:w-auto sm:border-0 sm:px-0">
-          <ul className="flex h-11 items-stretch gap-5 sm:h-14 sm:gap-6">
+          <ul className="flex h-11 items-stretch justify-between gap-2 xs:justify-start xs:gap-5 sm:h-14 sm:gap-6">
             {NAV.map((item) => {
               const active = item.href === "/" ? pathname === "/" : pathname.startsWith(item.href);
               return (
