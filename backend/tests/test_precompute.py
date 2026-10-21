@@ -157,8 +157,18 @@ def test_projections(output):
         assert p["position"] in {"RB", "WR", "TE"}
         assert p["data_week"] >= 5
         assert p["on_bye"] == (p["team"] in {"EEE", "FFF"})
-        if not p["on_bye"]:
+        if p["on_bye"]:
+            assert p["position_rank"] is None
+        else:
             assert p["opponent"] in TEAMS
+            assert p["position_rank"] >= 1
+    for position in {"RB", "WR", "TE"}:
+        ranks = sorted(
+            p["position_rank"]
+            for p in players
+            if p["position"] == position and not p["on_bye"]
+        )
+        assert ranks == list(range(1, len(ranks) + 1))
 
 
 def test_breakouts_follow_criteria(output):

@@ -39,7 +39,7 @@ Used by `projections.json`, `breakouts.json` and `waivers.json`.
 | `on_bye` | bool \| null | null when the schedule could not be loaded |
 | `data_week` | int | week of the row the projection is built from |
 | `projected_points` | number | XGBoost next-week PPR projection |
-| `position_rank` | int \| null | rank by projection within position (active pool) |
+| `position_rank` | int \| null | rank by projection within position among players with a game in `projection_week`; null on bye |
 | `recent_avg` | number | 3-week rolling PPR average (the baseline's prediction) |
 | `last_week_points` | number | PPR points in `data_week` |
 | `season_ppr` | number \| null | season-to-date PPR points |

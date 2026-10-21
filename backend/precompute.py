@@ -80,7 +80,7 @@ CALIBRATION_BINS = [0, 5, 10, 15, 20, 25, math.inf]
 def clean(value, digits=2):
     """Convert numpy/pandas scalars to JSON-safe Python values."""
 
-    if value is None:
+    if value is None or value is pd.NA:
         return None
     if isinstance(value, (np.bool_, bool)):
         return bool(value)
@@ -273,8 +273,14 @@ def build_matchups(schedule, week):
     return matchups
 
 
-def active_pool(base):
-    """Each RB/WR/TE's latest row, with recent data only."""
+def active_pool(base, matchups=None):
+    """
+    Each RB/WR/TE's latest row, with recent data only.
+
+    position_rank ranks projections within position among players who
+    have a game in projection_week (bye-week players get no rank). When
+    no schedule is available every player is ranked.
+    """
 
     pool = base["player_pool"]
     min_week = base["completed_week"] - PROJECTION_MAX_DATA_AGE_WEEKS
@@ -287,11 +293,17 @@ def active_pool(base):
     totals = season_totals(base["stats"], base["season"], base["completed_week"])
     pool = pool.merge(totals, on="player_id", how="left")
 
+    if matchups:
+        playing = pool["team"].isin(matchups.keys())
+    else:
+        playing = pd.Series(True, index=pool.index)
+
     pool["position_rank"] = (
-        pool.groupby("position")["projected_points"]
+        pool[playing]
+        .groupby("position")["projected_points"]
         .rank(ascending=False, method="first")
-        .astype(int)
     )
+    pool["position_rank"] = pool["position_rank"].astype("Int64")
     return pool
 
 
@@ -565,7 +577,7 @@ def run(stats=None, out_dir=STATIC_DATA_DIR, use_sleeper=True):
 
     trending = fetch_sleeper_trending() if use_sleeper else None
 
-    pool = active_pool(base)
+    pool = active_pool(base, matchups if schedule_ok else None)
     metrics = build_metrics(base)
     projections = build_projections(base, pool, matchups, projection_week)
     breakouts = build_breakouts(base, pool, matchups, projection_week)

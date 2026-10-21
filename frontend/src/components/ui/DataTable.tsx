@@ -72,8 +72,12 @@ export function DataTable<T>({
 
   return (
     <div
-      className="overflow-auto rounded-lg border border-rule bg-surface"
-      style={{ maxHeight }}
+      className={cn(
+        "overflow-x-auto rounded-lg border border-rule bg-surface",
+        // Phones scroll the page, not a box inside it; larger screens get a sticky header.
+        maxHeight !== "none" && "md:max-h-[var(--table-max-h)] md:overflow-y-auto",
+      )}
+      style={{ "--table-max-h": maxHeight } as React.CSSProperties}
       tabIndex={0}
       role="region"
       aria-label={caption}
@@ -85,7 +89,7 @@ export function DataTable<T>({
             {rankColumn && (
               <th
                 scope="col"
-                className="sticky top-0 z-10 w-10 border-b border-rule bg-surface-sunk px-3 py-2.5 text-right text-xs font-medium text-muted"
+                className="sticky top-0 z-10 hidden w-10 border-b border-rule bg-surface-sunk px-3 py-2.5 text-right text-xs font-medium text-muted sm:table-cell"
               >
                 <span className="sr-only">Rank</span>#
               </th>
@@ -145,7 +149,7 @@ export function DataTable<T>({
           {sorted.map((row, index) => (
             <tr key={rowKey(row)} className="hover:bg-surface-sunk/70">
               {rankColumn && (
-                <td className="border-b border-rule px-3 py-2.5 text-right text-xs text-muted">
+                <td className="hidden border-b border-rule px-3 py-2.5 text-right text-xs text-muted sm:table-cell">
                   {index + 1}
                 </td>
               )}
