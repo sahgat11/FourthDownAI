@@ -1,26 +1,9 @@
 import argparse
 
-from data_loader import (
-    load_player_stats,
-)
-
-from feature_engineering import (
-    build_features,
-)
-
-from baseline_model import (
-    evaluate_baseline,
-)
-
-from ml_model import (
-    train_and_evaluate,
-    train_production_model,
-    predict_next_week,
-    predict_player_pool,
-)
-
-from breakout_engine import (
-    calculate_breakout_scores,
+from config import SEASON
+from pipeline import (
+    build_base_analysis,
+    mae_improvement_percent,
 )
 
 from sleeper_client import (
@@ -42,13 +25,6 @@ from team_engine import (
 from move_engine import (
     generate_add_drop_recommendations,
 )
-
-from week_utils import (
-    get_latest_complete_week,
-)
-
-
-SEASON = 2026
 
 
 def print_model_performance(
@@ -74,13 +50,19 @@ def print_model_performance(
         f"{ml['mae']:.2f}"
     )
 
-    improvement = (
-        (
-            baseline["mae"]
-            - ml["mae"]
-        )
-        / baseline["mae"]
-        * 100
+    print(
+        f"Baseline RMSE: "
+        f"{baseline['rmse']:.2f}"
+    )
+
+    print(
+        f"XGBoost RMSE:  "
+        f"{ml['rmse']:.2f}"
+    )
+
+    improvement = mae_improvement_percent(
+        baseline,
+        ml,
     )
 
     print(
@@ -395,30 +377,15 @@ def main():
 
     args = parser.parse_args()
 
-    stats = load_player_stats()
-
-    features = build_features(
-        stats
+    base = build_base_analysis(
+        season=SEASON,
     )
 
-    completed_week = (
-        get_latest_complete_week(
-            features,
-            season=SEASON,
-        )
-    )
-
-    baseline = evaluate_baseline(
-        features,
-        test_season=SEASON,
-        max_target_week=completed_week,
-    )
-
-    ml = train_and_evaluate(
-        features,
-        test_season=SEASON,
-        max_target_week=completed_week,
-    )
+    completed_week = base["completed_week"]
+    baseline = base["baseline"]
+    ml = base["ml"]
+    breakouts = base["breakouts"]
+    player_pool_predictions = base["player_pool"]
 
     print()
     print("FourthDown AI")
@@ -432,41 +399,6 @@ def main():
     print_model_performance(
         baseline,
         ml,
-    )
-
-    production_model = (
-        train_production_model(
-            features,
-            season=SEASON,
-            completed_week=completed_week,
-        )
-    )
-
-    # Current completed week only.
-    # Used for breakout detection.
-    predictions = predict_next_week(
-        features,
-        production_model,
-        season=SEASON,
-        completed_week=completed_week,
-    )
-
-    # Most recent usable row for
-    # every player.
-    # Used for general roster/waiver value.
-    player_pool_predictions = (
-        predict_player_pool(
-            features,
-            production_model,
-            season=SEASON,
-            completed_week=completed_week,
-        )
-    )
-
-    breakouts = (
-        calculate_breakout_scores(
-            predictions
-        )
     )
 
     print_breakouts(

@@ -1,28 +1,8 @@
 import threading
 from functools import lru_cache
 
-from data_loader import (
-    load_player_stats,
-)
-
-from feature_engineering import (
-    build_features,
-)
-
-from baseline_model import (
-    evaluate_baseline,
-)
-
-from ml_model import (
-    train_and_evaluate,
-    train_production_model,
-    predict_next_week,
-    predict_player_pool,
-)
-
-from breakout_engine import (
-    calculate_breakout_scores,
-)
+from config import SEASON
+from pipeline import build_base_analysis
 
 from sleeper_client import (
     get_league,
@@ -44,13 +24,6 @@ from move_engine import (
     generate_add_drop_recommendations,
 )
 
-from week_utils import (
-    get_latest_complete_week,
-)
-
-
-SEASON = 2026
-
 
 # Prevent multiple simultaneous API requests
 # from rebuilding the ML pipeline at once.
@@ -64,88 +37,9 @@ def _build_base_analysis():
         "analysis cache..."
     )
 
-    stats = load_player_stats()
-
-    features = build_features(
-        stats
-    )
-
-    completed_week = (
-        get_latest_complete_week(
-            features,
-            season=SEASON,
-        )
-    )
-
-    baseline = evaluate_baseline(
-        features,
-        test_season=SEASON,
-        max_target_week=completed_week,
-    )
-
-    ml = train_and_evaluate(
-        features,
-        test_season=SEASON,
-        max_target_week=completed_week,
-    )
-
-    production_model = (
-        train_production_model(
-            features,
-            season=SEASON,
-            completed_week=completed_week,
-        )
-    )
-
-    predictions = predict_next_week(
-        features,
-        production_model,
+    return build_base_analysis(
         season=SEASON,
-        completed_week=completed_week,
     )
-
-    player_pool = predict_player_pool(
-        features,
-        production_model,
-        season=SEASON,
-        completed_week=completed_week,
-    )
-
-    breakouts = (
-        calculate_breakout_scores(
-            predictions
-        )
-    )
-
-    improvement = (
-        (
-            baseline["mae"]
-            - ml["mae"]
-        )
-        / baseline["mae"]
-        * 100
-    )
-
-    return {
-        "season":
-            SEASON,
-        "completed_week":
-            completed_week,
-        "features":
-            features,
-        "baseline":
-            baseline,
-        "ml":
-            ml,
-        "model_improvement":
-            improvement,
-        "predictions":
-            predictions,
-        "player_pool":
-            player_pool,
-        "breakouts":
-            breakouts,
-    }
 
 
 def get_base_analysis():

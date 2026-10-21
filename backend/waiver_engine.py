@@ -279,6 +279,102 @@ def percentile_score(
     )
 
 
+def filter_waiver_pool(
+    player_pool,
+    completed_week,
+    min_projection=5.0,
+    max_data_age_weeks=1,
+):
+    """
+    Keep projected RB/WR/TE with a meaningful
+    projection and recent data.
+    """
+
+    players = player_pool.copy()
+
+    # Only positions currently supported
+    # by FourthDown's ML model.
+    players = players[
+        players["position"].isin(SKILL_POSITIONS)
+    ].copy()
+
+    players = players[
+        players["projected_points"].notna()
+    ].copy()
+
+    # Remove very low-value candidates.
+    players = players[
+        players["projected_points"] >= min_projection
+    ].copy()
+
+    # Avoid recommending players whose
+    # most recent data is very stale.
+    minimum_week = completed_week - max_data_age_weeks
+
+    players = players[
+        players["week"] >= minimum_week
+    ].copy()
+
+    return players
+
+
+def score_waiver_candidates(
+    available,
+    breakouts,
+):
+    """
+    Rank a set of available players.
+
+    General waiver value mostly reflects
+    projected production; Breakout Score is
+    one additional signal, not a requirement.
+    """
+
+    available = available.copy()
+
+    if available.empty:
+        return available
+
+    (
+        breakout_id_lookup,
+        breakout_name_lookup,
+    ) = build_breakout_lookup(breakouts)
+
+    available["breakout_score"] = available.apply(
+        lambda row: get_breakout_score(
+            row,
+            breakout_id_lookup,
+            breakout_name_lookup,
+        ),
+        axis=1,
+    )
+
+    available["is_breakout"] = available["breakout_score"] > 0
+
+    available["projection_rank"] = percentile_score(
+        available["projected_points"]
+    )
+
+    available["recent_rank"] = percentile_score(
+        available["fantasy_points_ppr_avg_3"].fillna(0)
+    )
+
+    available["breakout_rank"] = available["breakout_score"] / 100.0
+
+    available["waiver_score"] = (
+        0.70 * available["projection_rank"]
+        + 0.20 * available["recent_rank"]
+        + 0.10 * available["breakout_rank"]
+    ) * 100
+
+    available["waiver_score"] = available["waiver_score"].round(1)
+
+    return available.sort_values(
+        ["waiver_score", "projected_points"],
+        ascending=[False, False],
+    )
+
+
 def find_available_players(
     player_pool,
     breakouts,
@@ -289,50 +385,20 @@ def find_available_players(
     max_data_age_weeks=1,
 ):
     """
-    Build a complete waiver pool.
+    Build a complete waiver pool for a
+    specific Sleeper league.
 
     Unlike Breakout Watch, a player does
     NOT need to be trending upward to be
     considered here.
     """
 
-    players = player_pool.copy()
-
-    # Only positions currently supported
-    # by FourthDown's ML model.
-    players = players[
-        players[
-            "position"
-        ].isin(
-            SKILL_POSITIONS
-        )
-    ].copy()
-
-    players = players[
-        players[
-            "projected_points"
-        ].notna()
-    ].copy()
-
-    # Remove very low-value candidates.
-    players = players[
-        players[
-            "projected_points"
-        ]
-        >= min_projection
-    ].copy()
-
-    # Avoid recommending players whose
-    # most recent data is very stale.
-    minimum_week = (
-        completed_week
-        - max_data_age_weeks
+    players = filter_waiver_pool(
+        player_pool,
+        completed_week,
+        min_projection=min_projection,
+        max_data_age_weeks=max_data_age_weeks,
     )
-
-    players = players[
-        players["week"]
-        >= minimum_week
-    ].copy()
 
     (
         owned_gsis_ids,
@@ -342,11 +408,11 @@ def find_available_players(
         owned_player_ids,
     )
 
-    players[
-        "is_rostered"
-    ] = players.apply(
-        lambda row:
-        is_player_rostered(
+    if players.empty:
+        return players
+
+    players["is_rostered"] = players.apply(
+        lambda row: is_player_rostered(
             row,
             owned_gsis_ids,
             owned_name_keys,
@@ -355,120 +421,9 @@ def find_available_players(
     )
 
     # Only true free agents remain.
-    available = players[
-        ~players[
-            "is_rostered"
-        ]
-    ].copy()
+    available = players[~players["is_rostered"]].copy()
 
-    if available.empty:
-        return available
-
-    # Attach Breakout Score as an
-    # additional signal rather than
-    # requiring it.
-    (
-        breakout_id_lookup,
-        breakout_name_lookup,
-    ) = build_breakout_lookup(
-        breakouts
+    return score_waiver_candidates(
+        available,
+        breakouts,
     )
-
-    available[
-        "breakout_score"
-    ] = available.apply(
-        lambda row:
-        get_breakout_score(
-            row,
-            breakout_id_lookup,
-            breakout_name_lookup,
-        ),
-        axis=1,
-    )
-
-    available[
-        "is_breakout"
-    ] = (
-        available[
-            "breakout_score"
-        ]
-        > 0
-    )
-
-    # General waiver value should mostly
-    # reflect projected fantasy production.
-    #
-    # Breakout status is useful, but it is
-    # only one part of the ranking.
-    available[
-        "projection_rank"
-    ] = percentile_score(
-        available[
-            "projected_points"
-        ]
-    )
-
-    available[
-        "recent_rank"
-    ] = percentile_score(
-        available[
-            "fantasy_points_ppr_avg_3"
-        ].fillna(0)
-    )
-
-    available[
-        "breakout_rank"
-    ] = (
-        available[
-            "breakout_score"
-        ]
-        / 100.0
-    )
-
-    available[
-        "waiver_score"
-    ] = (
-        (
-            0.70
-            * available[
-                "projection_rank"
-            ]
-        )
-        + (
-            0.20
-            * available[
-                "recent_rank"
-            ]
-        )
-        + (
-            0.10
-            * available[
-                "breakout_rank"
-            ]
-        )
-    ) * 100
-
-    available[
-        "waiver_score"
-    ] = (
-        available[
-            "waiver_score"
-        ]
-        .round(1)
-    )
-
-    available = (
-        available
-        .sort_values(
-            [
-                "waiver_score",
-                "projected_points",
-            ],
-            ascending=[
-                False,
-                False,
-            ],
-        )
-    )
-
-    return available

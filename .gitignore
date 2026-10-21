@@ -12,3 +12,6 @@ data/sleeper_players.json
 backend/data/
 
 .ipynb_checkpoints/
+.pytest_cache/
+*.parquet
+frontend/public/data/.*.tmp
