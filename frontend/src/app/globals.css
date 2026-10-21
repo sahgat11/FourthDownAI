@@ -1,22 +1,199 @@
 @import "tailwindcss";
 
-* {
-  box-sizing: border-box;
+/*
+ * FourthDown design tokens
+ *
+ * Bay Area palette: fog neutrals, Bridge orange (International Orange)
+ * as the single accent, brass reserved for breakout signals, and Bay
+ * blue for the baseline series in charts. Light is the default; dark
+ * follows the OS unless the viewer picks a theme (data-theme on <html>).
+ */
+
+:root {
+  color-scheme: light;
+
+  --fog: #eef0ef;            /* page background */
+  --surface: #fbfbfa;        /* panels, tables */
+  --surface-sunk: #f2f4f3;   /* table header, hover rows, inputs */
+  --rule: #d7dcdf;           /* borders and dividers */
+  --rule-strong: #b9c1c6;
+
+  --ink: #172026;            /* primary text */
+  --ink-2: #46515a;          /* secondary text */
+  --muted: #646e76;          /* tertiary text, captions (4.9:1 on surface) */
+
+  --accent: #c0362c;         /* Bridge orange */
+  --accent-hover: #a72d24;
+  --accent-ink: #ffffff;     /* text on accent */
+  --accent-soft: #f6e2df;    /* tinted backgrounds */
+  --accent-text: #b0302a;    /* accent used as text (5.6:1) */
+
+  --brass: #8a6a1f;          /* breakout signal, text-safe */
+  --brass-soft: #f3ead6;
+
+  --series-model: #c0362c;   /* XGBoost */
+  --series-baseline: #2f72a8;/* 3-week average baseline */
+
+  --focus: #c0362c;
+  --shadow-pop: 0 1px 2px rgb(23 32 38 / 0.06), 0 8px 24px rgb(23 32 38 / 0.08);
 }
 
-html {
-  background: #09090b;
+@media (prefers-color-scheme: dark) {
+  :root:where(:not([data-theme="light"])) {
+    color-scheme: dark;
+    --fog: #0f1316;
+    --surface: #161b20;
+    --surface-sunk: #1c2228;
+    --rule: #29313a;
+    --rule-strong: #3a444e;
+    --ink: #e8ecee;
+    --ink-2: #b3bcc3;
+    --muted: #8d979f;
+    --accent: #e5563f;
+    --accent-hover: #ee6a54;
+    --accent-ink: #0f1316;
+    --accent-soft: #3a201c;
+    --accent-text: #f07a65;
+    --brass: #d3a84f;
+    --brass-soft: #2e2716;
+    --series-model: #e5563f;
+    --series-baseline: #4c8cc4;
+    --focus: #f07a65;
+    --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+  }
 }
 
-body {
-  margin: 0;
-  background: #09090b;
-  color: #ffffff;
-  font-family: Arial, Helvetica, sans-serif;
+:root[data-theme="dark"] {
+  color-scheme: dark;
+  --fog: #0f1316;
+  --surface: #161b20;
+  --surface-sunk: #1c2228;
+  --rule: #29313a;
+  --rule-strong: #3a444e;
+  --ink: #e8ecee;
+  --ink-2: #b3bcc3;
+  --muted: #8d979f;
+  --accent: #e5563f;
+  --accent-hover: #ee6a54;
+  --accent-ink: #0f1316;
+  --accent-soft: #3a201c;
+  --accent-text: #f07a65;
+  --brass: #d3a84f;
+  --brass-soft: #2e2716;
+  --series-model: #e5563f;
+  --series-baseline: #4c8cc4;
+  --focus: #f07a65;
+  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
 }
 
-button,
-input,
-select {
-  font: inherit;
+@theme inline {
+  --color-fog: var(--fog);
+  --color-surface: var(--surface);
+  --color-surface-sunk: var(--surface-sunk);
+  --color-rule: var(--rule);
+  --color-rule-strong: var(--rule-strong);
+  --color-ink: var(--ink);
+  --color-ink-2: var(--ink-2);
+  --color-muted: var(--muted);
+  --color-accent: var(--accent);
+  --color-accent-hover: var(--accent-hover);
+  --color-accent-ink: var(--accent-ink);
+  --color-accent-soft: var(--accent-soft);
+  --color-accent-text: var(--accent-text);
+  --color-brass: var(--brass);
+  --color-brass-soft: var(--brass-soft);
+  --color-series-model: var(--series-model);
+  --color-series-baseline: var(--series-baseline);
+
+  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+
+  /* Type scale (classic 12 / 14 / 16 / 18 / 21 / 24 / 36 / 48 / 72) */
+  --text-xs: 0.75rem;
+  --text-xs--line-height: 1rem;
+  --text-sm: 0.875rem;
+  --text-sm--line-height: 1.25rem;
+  --text-base: 1rem;
+  --text-base--line-height: 1.5rem;
+  --text-lg: 1.125rem;
+  --text-lg--line-height: 1.625rem;
+  --text-xl: 1.3125rem;
+  --text-xl--line-height: 1.75rem;
+  --text-2xl: 1.5rem;
+  --text-2xl--line-height: 1.875rem;
+  --text-3xl: 2.25rem;
+  --text-3xl--line-height: 2.5rem;
+  --text-4xl: 3rem;
+  --text-4xl--line-height: 3rem;
+  --text-5xl: 4.5rem;
+  --text-5xl--line-height: 4.25rem;
+
+  --radius-sm: 3px;
+  --radius-md: 6px;
+  --radius-lg: 10px;
+
+  --shadow-pop: var(--shadow-pop);
+
+  --breakpoint-xs: 26rem;
+}
+
+@layer base {
+  html {
+    background: var(--fog);
+    -webkit-text-size-adjust: 100%;
+  }
+
+  body {
+    background: var(--fog);
+    color: var(--ink);
+    font-family: var(--font-sans);
+    font-stretch: 100%;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    text-rendering: optimizeLegibility;
+  }
+
+  ::selection {
+    background: var(--accent-soft);
+    color: var(--ink);
+  }
+
+  :focus-visible {
+    outline: 2px solid var(--focus);
+    outline-offset: 2px;
+    border-radius: var(--radius-sm);
+  }
+
+  button,
+  input,
+  select {
+    font: inherit;
+  }
+}
+
+@layer utilities {
+  /* Condensed display face: headlines and stat numerals. */
+  .font-display {
+    font-stretch: 75%;
+    letter-spacing: -0.01em;
+  }
+
+  .font-semi-condensed {
+    font-stretch: 87.5%;
+  }
+
+  /* Every stat lines up in columns. */
+  .tabular {
+    font-variant-numeric: tabular-nums lining-nums;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 0.01ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    scroll-behavior: auto !important;
+  }
 }
