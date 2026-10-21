@@ -8,7 +8,7 @@ export function Wordmark() {
         <rect x="12" y="3" width="2" height="12" rx="1" fill="var(--rule-strong)" />
         <rect x="18" y="0" width="3" height="18" rx="1.5" fill="var(--accent)" />
       </svg>
-      <span className="font-display text-xl font-extrabold tracking-tight text-ink">
+      <span translate="no" className="font-display text-xl font-extrabold tracking-tight text-ink">
         FourthDown
       </span>
     </span>

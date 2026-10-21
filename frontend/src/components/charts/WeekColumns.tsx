@@ -37,7 +37,7 @@ export function WeekColumns({ data, unit }: { data: WeekDatum[]; unit: string })
   return (
     <div ref={ref} className="relative" style={{ height: HEIGHT }} onMouseLeave={() => setActive(null)}>
       {width > 0 && (
-        <svg width={width} height={HEIGHT} role="img" aria-label={`Mean error by week in ${unit}. Use Show as table for exact values.`}>
+        <svg width={width} height={HEIGHT} role="group" aria-label={`Error by week in ${unit}. Each week is focusable; Show as table lists every value.`}>
           {ticks.map((t) => (
             <g key={t}>
               <line x1={M.left} x2={width - M.right} y1={y(t)} y2={y(t)} stroke="var(--rule)" strokeWidth={1} />

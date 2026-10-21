@@ -32,7 +32,7 @@ export function PageHeader({
           </span>
         </p>
       )}
-      <h1 className="font-display text-4xl font-extrabold sm:text-5xl">{title}</h1>
+      <h1 className="font-display text-4xl font-extrabold text-balance sm:text-5xl">{title}</h1>
       {description && <div className="max-w-[62ch] text-base text-ink-2">{description}</div>}
       {children}
     </div>

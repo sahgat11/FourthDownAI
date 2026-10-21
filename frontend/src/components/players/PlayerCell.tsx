@@ -12,7 +12,7 @@ export function PlayerCell({ player, children }: { player: PlayerRecord; childre
       <PositionBadge position={player.position} />
       <span className="flex min-w-0 flex-col">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
-          <span className="font-medium text-ink">{player.name}</span>
+          <span data-player-name className="font-medium text-ink">{player.name}</span>
           {children}
         </span>
         <span className="flex items-center gap-1.5 text-xs text-muted md:hidden">

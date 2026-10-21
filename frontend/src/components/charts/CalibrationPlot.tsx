@@ -34,7 +34,7 @@ export function CalibrationPlot({ bins }: { bins: Bin[] }) {
   return (
     <div ref={ref} className="relative" style={{ height: HEIGHT }} onMouseLeave={() => setActive(null)}>
       {width > 0 && (
-        <svg width={width} height={HEIGHT} role="img" aria-label="Average projected points against average actual points for each projection range. Use Show as table for exact values.">
+        <svg width={width} height={HEIGHT} role="group" aria-label="Average projection against average result for each projection range. Each point is focusable; Show as table lists every value.">
           {ticks.map((t) => (
             <g key={t}>
               <line x1={M.left} x2={width - M.right} y1={y(t)} y2={y(t)} stroke="var(--rule)" />

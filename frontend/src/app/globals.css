@@ -28,7 +28,7 @@
   --accent-soft: #f6e2df;    /* tinted backgrounds */
   --accent-text: #b0302a;    /* accent used as text (5.6:1) */
 
-  --brass: #8a6a1f;          /* breakout signal, text-safe */
+  --brass: #7a5c17;          /* breakout signal; 5.2:1 on brass-soft */
   --brass-soft: #f3ead6;
 
   --series-model: #c0362c;   /* XGBoost */
@@ -167,6 +167,21 @@
   input,
   select {
     font: inherit;
+  }
+
+  a,
+  button,
+  label,
+  summary,
+  [role="button"] {
+    touch-action: manipulation;
+    -webkit-tap-highlight-color: transparent;
+  }
+
+  h1,
+  h2,
+  h3 {
+    text-wrap: balance;
   }
 }
 

@@ -41,9 +41,13 @@ export function FilterBar({
           </svg>
           <input
             type="search"
+            name="q"
+            autoComplete="off"
+            spellCheck={false}
+            enterKeyHint="search"
             value={query}
             onChange={(e) => onQuery(e.target.value)}
-            placeholder="Search players or teams"
+            placeholder="Search players or teams…"
             className="h-9 w-full rounded-md border border-rule-strong bg-surface pr-3 pl-9 text-sm text-ink placeholder:text-muted"
           />
         </label>

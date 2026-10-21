@@ -40,7 +40,7 @@ const swatches: { token: string; name: string; light: string; dark: string; use:
   { token: "--ink-2", name: "Ink 2", light: "#46515a", dark: "#b3bcc3", use: "Secondary text" },
   { token: "--muted", name: "Muted", light: "#646e76", dark: "#8d979f", use: "Captions" },
   { token: "--accent", name: "Bridge", light: "#c0362c", dark: "#e5563f", use: "The model, active state, primary action" },
-  { token: "--brass", name: "Brass", light: "#8a6a1f", dark: "#d3a84f", use: "Breakout signal only" },
+  { token: "--brass", name: "Brass", light: "#7a5c17", dark: "#d3a84f", use: "Breakout signal only" },
   { token: "--series-baseline", name: "Bay", light: "#2f72a8", dark: "#4c8cc4", use: "Baseline series in charts" },
 ];
 
@@ -285,10 +285,10 @@ export default function DesignPage() {
       <Section title="Loading, empty and error" note="Placeholders keep the layout steady; empty and error states say what happened and what to do next.">
         <div className="grid gap-4 lg:grid-cols-3">
           <TableSkeleton rows={4} />
-          <EmptyState title="No players match these filters" action={<Button>Clear filters</Button>}>
+          <EmptyState as="h3" title="No players match these filters" action={<Button>Clear filters</Button>}>
             Try a different position or lower the minimum projection.
           </EmptyState>
-          <ErrorState title="Projections didn't load" action={<Button>Try again</Button>}>
+          <ErrorState as="h3" title="Projections didn't load" action={<Button>Try again</Button>}>
             The data file couldn&apos;t be reached. Check your connection and try again.
           </ErrorState>
         </div>

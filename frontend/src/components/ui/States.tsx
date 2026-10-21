@@ -11,7 +11,7 @@ export function Skeleton({ className }: { className?: string }) {
 }
 
 /** Placeholder rows shaped like the table that will replace them. */
-export function TableSkeleton({ rows = 8, label = "Loading data" }: { rows?: number; label?: string }) {
+export function TableSkeleton({ rows = 8, label = "Loading data…" }: { rows?: number; label?: string }) {
   return (
     <div role="status" aria-label={label} className="divide-y divide-rule rounded-lg border border-rule bg-surface">
       <div className="flex gap-4 bg-surface-sunk px-4 py-3">
@@ -31,18 +31,22 @@ export function TableSkeleton({ rows = 8, label = "Loading data" }: { rows?: num
   );
 }
 
+type HeadingLevel = "h2" | "h3";
+
 export function EmptyState({
   title,
   children,
   action,
+  as: Heading = "h2",
 }: {
   title: string;
   children?: ReactNode;
   action?: ReactNode;
+  as?: HeadingLevel;
 }) {
   return (
     <div className="flex flex-col items-start gap-3 rounded-lg border border-dashed border-rule-strong bg-surface px-6 py-10">
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <Heading className="text-lg font-semibold">{title}</Heading>
       {children && <div className="max-w-prose text-sm text-ink-2">{children}</div>}
       {action}
     </div>
@@ -53,17 +57,19 @@ export function ErrorState({
   title,
   children,
   action,
+  as: Heading = "h2",
 }: {
   title: string;
   children?: ReactNode;
   action?: ReactNode;
+  as?: HeadingLevel;
 }) {
   return (
     <div
       role="alert"
       className="flex flex-col items-start gap-3 rounded-lg border border-rule bg-surface px-6 py-8 border-l-4 border-l-accent"
     >
-      <h3 className="text-lg font-semibold">{title}</h3>
+      <Heading className="text-lg font-semibold">{title}</Heading>
       {children && <div className="max-w-prose text-sm text-ink-2">{children}</div>}
       {action}
     </div>

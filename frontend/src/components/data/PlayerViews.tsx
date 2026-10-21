@@ -59,7 +59,7 @@ function WaiversLoaded() {
 
 export function ProjectionsView() {
   return (
-    <DataBoundary file="projections.json" what="Projections" fallback={<PlayerTableSkeleton label="Loading projections" />}>
+    <DataBoundary file="projections.json" what="Projections" fallback={<PlayerTableSkeleton label="Loading projections…" />}>
       <ProjectionsLoaded />
     </DataBoundary>
   );
@@ -67,7 +67,7 @@ export function ProjectionsView() {
 
 export function BreakoutsView() {
   return (
-    <DataBoundary file="breakouts.json" what="Breakout candidates" fallback={<PlayerTableSkeleton label="Loading breakout candidates" search={false} />}>
+    <DataBoundary file="breakouts.json" what="Breakout candidates" fallback={<PlayerTableSkeleton label="Loading breakout candidates…" search={false} />}>
       <BreakoutsLoaded />
     </DataBoundary>
   );
@@ -75,7 +75,7 @@ export function BreakoutsView() {
 
 export function WaiversView() {
   return (
-    <DataBoundary file="waivers.json" what="Waiver targets" fallback={<PlayerTableSkeleton label="Loading waiver targets" />}>
+    <DataBoundary file="waivers.json" what="Waiver targets" fallback={<PlayerTableSkeleton label="Loading waiver targets…" />}>
       <WaiversLoaded />
     </DataBoundary>
   );
