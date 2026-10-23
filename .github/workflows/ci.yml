@@ -27,7 +27,10 @@ jobs:
         run: python -m pytest -q backend/tests
 
   frontend:
-    runs-on: ubuntu-latest
+    # Pinned: Playwright 1.56 ships browsers for Ubuntu 24.04 but not the
+    # 26.04 image that ubuntu-latest now points to. Revisit when Playwright
+    # is upgraded (Dependabot groups those updates).
+    runs-on: ubuntu-24.04
     timeout-minutes: 20
     defaults:
       run:
