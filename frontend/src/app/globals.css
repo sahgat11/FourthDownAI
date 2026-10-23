@@ -1,89 +1,103 @@
 @import "tailwindcss";
 
 /*
- * FourthDown design tokens
+ * FourthDown design tokens: varsity
  *
- * Bay Area palette: fog neutrals, Bridge orange (International Orange)
- * as the single accent, brass reserved for breakout signals, and Bay
- * blue for the baseline series in charts. Light is the default; dark
- * follows the OS unless the viewer picks a theme (data-theme on <html>).
+ * Navy ink on chalk, varsity red as the single accent (the model,
+ * anything active, primary actions), old gold reserved for breakout
+ * signals, varsity blue only for the baseline series in charts. A navy
+ * header and footer carry a red/white/red jacket-trim stripe. Light is
+ * the default; dark follows the OS unless the viewer picks a theme.
  */
 
 :root {
   color-scheme: light;
 
-  --fog: #eef0ef;            /* page background */
-  --surface: #fbfbfa;        /* panels, tables */
-  --surface-sunk: #f2f4f3;   /* table header, hover rows, inputs */
-  --rule: #d7dcdf;           /* borders and dividers */
-  --rule-strong: #b9c1c6;
+  --fog: #f4f2ec;            /* page background: chalk */
+  --surface: #ffffff;        /* panels, tables */
+  --surface-sunk: #eef0f4;   /* table header, hover rows, inputs */
+  --rule: #d9dde5;           /* borders and dividers */
+  --rule-strong: #b7bfcd;
 
-  --ink: #172026;            /* primary text */
-  --ink-2: #46515a;          /* secondary text */
-  --muted: #646e76;          /* tertiary text, captions (4.9:1 on surface) */
+  --ink: #0e1c36;            /* primary text: varsity navy */
+  --ink-2: #3b4a66;          /* secondary text */
+  --muted: #5d6a80;          /* captions (4.9:1 on fog) */
 
-  --accent: #c0362c;         /* Bridge orange */
-  --accent-hover: #a72d24;
+  --accent: #b8122e;         /* varsity red */
+  --accent-hover: #9e0f27;
   --accent-ink: #ffffff;     /* text on accent */
-  --accent-soft: #f6e2df;    /* tinted backgrounds */
-  --accent-text: #b0302a;    /* accent used as text (5.6:1) */
+  --accent-soft: #fbe6e9;
+  --accent-text: #a30f28;    /* red used as text */
 
-  --brass: #7a5c17;          /* breakout signal; 5.2:1 on brass-soft */
-  --brass-soft: #f3ead6;
+  --brass: #7a5c17;          /* breakout signal: old gold */
+  --brass-soft: #f5ecd6;
 
-  --series-model: #c0362c;   /* XGBoost */
-  --series-baseline: #2f72a8;/* 3-week average baseline */
+  --series-model: #b8122e;   /* XGBoost */
+  --series-baseline: #2c5aa0;/* 3-week average baseline */
 
-  --focus: #c0362c;
-  --shadow-pop: 0 1px 2px rgb(23 32 38 / 0.06), 0 8px 24px rgb(23 32 38 / 0.08);
+  --header: #0e1c36;         /* navy header and footer */
+  --header-ink: #ffffff;
+  --header-ink-2: #c9d3e6;
+  --header-rule: #24365a;
+
+  --focus: #b8122e;
+  --shadow-pop: 0 1px 2px rgb(14 28 54 / 0.08), 0 8px 24px rgb(14 28 54 / 0.12);
 }
 
 @media (prefers-color-scheme: dark) {
   :root:where(:not([data-theme="light"])) {
     color-scheme: dark;
-    --fog: #0f1316;
-    --surface: #161b20;
-    --surface-sunk: #1c2228;
-    --rule: #29313a;
-    --rule-strong: #3a444e;
-    --ink: #e8ecee;
-    --ink-2: #b3bcc3;
-    --muted: #8d979f;
-    --accent: #e5563f;
-    --accent-hover: #ee6a54;
-    --accent-ink: #0f1316;
-    --accent-soft: #3a201c;
-    --accent-text: #f07a65;
-    --brass: #d3a84f;
-    --brass-soft: #2e2716;
-    --series-model: #e5563f;
-    --series-baseline: #4c8cc4;
-    --focus: #f07a65;
-    --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+    --fog: #0b162c;
+    --surface: #13223f;
+    --surface-sunk: #1a2b4c;
+    --rule: #26385c;
+    --rule-strong: #354a72;
+    --ink: #eef1f7;
+    --ink-2: #aeb9cf;
+    --muted: #8c98b1;
+    --accent: #e8475a;
+    --accent-hover: #f05a6c;
+    --accent-ink: #0b162c;
+    --accent-soft: #3a1622;
+    --accent-text: #ff6b7a;
+    --brass: #d9ae52;
+    --brass-soft: #2e2614;
+    --series-model: #e8475a;
+    --series-baseline: #5b8fd6;
+    --header: #08111f;
+    --header-ink: #ffffff;
+    --header-ink-2: #c9d3e6;
+    --header-rule: #1d2d4d;
+    --focus: #ff6b7a;
+    --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px rgb(0 0 0 / 0.4);
   }
 }
 
 :root[data-theme="dark"] {
   color-scheme: dark;
-  --fog: #0f1316;
-  --surface: #161b20;
-  --surface-sunk: #1c2228;
-  --rule: #29313a;
-  --rule-strong: #3a444e;
-  --ink: #e8ecee;
-  --ink-2: #b3bcc3;
-  --muted: #8d979f;
-  --accent: #e5563f;
-  --accent-hover: #ee6a54;
-  --accent-ink: #0f1316;
-  --accent-soft: #3a201c;
-  --accent-text: #f07a65;
-  --brass: #d3a84f;
-  --brass-soft: #2e2716;
-  --series-model: #e5563f;
-  --series-baseline: #4c8cc4;
-  --focus: #f07a65;
-  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.3), 0 8px 24px rgb(0 0 0 / 0.35);
+  --fog: #0b162c;
+  --surface: #13223f;
+  --surface-sunk: #1a2b4c;
+  --rule: #26385c;
+  --rule-strong: #354a72;
+  --ink: #eef1f7;
+  --ink-2: #aeb9cf;
+  --muted: #8c98b1;
+  --accent: #e8475a;
+  --accent-hover: #f05a6c;
+  --accent-ink: #0b162c;
+  --accent-soft: #3a1622;
+  --accent-text: #ff6b7a;
+  --brass: #d9ae52;
+  --brass-soft: #2e2614;
+  --series-model: #e8475a;
+  --series-baseline: #5b8fd6;
+  --header: #08111f;
+  --header-ink: #ffffff;
+  --header-ink-2: #c9d3e6;
+  --header-rule: #1d2d4d;
+  --focus: #ff6b7a;
+  --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px rgb(0 0 0 / 0.4);
 }
 
 @theme inline {
@@ -104,8 +118,14 @@
   --color-brass-soft: var(--brass-soft);
   --color-series-model: var(--series-model);
   --color-series-baseline: var(--series-baseline);
+  --color-header: var(--header);
+  --color-header-ink: var(--header-ink);
+  --color-header-ink-2: var(--header-ink-2);
+  --color-header-rule: var(--header-rule);
 
-  --font-sans: var(--font-archivo), ui-sans-serif, system-ui, sans-serif;
+  --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
+  --font-display: var(--font-big-shoulders), var(--font-barlow), ui-sans-serif, sans-serif;
+  --font-varsity: var(--font-graduate), var(--font-big-shoulders), serif;
 
   /* Type scale (classic 12 / 14 / 16 / 18 / 21 / 24 / 36 / 48 / 72) */
   --text-xs: 0.75rem;
@@ -146,7 +166,6 @@
     background: var(--fog);
     color: var(--ink);
     font-family: var(--font-sans);
-    font-stretch: 100%;
     -webkit-font-smoothing: antialiased;
     -moz-osx-font-smoothing: grayscale;
     text-rendering: optimizeLegibility;
@@ -183,17 +202,42 @@
   h3 {
     text-wrap: balance;
   }
+
+  /* Section headings share the scoreboard face with the page titles. */
+  h2 {
+    font-family: var(--font-display);
+    letter-spacing: 0.01em;
+  }
 }
 
 @layer utilities {
-  /* Condensed display face: headlines and stat numerals. */
+  /* Stadium-scoreboard display face: headlines and stat numerals. */
   .font-display {
-    font-stretch: 75%;
-    letter-spacing: -0.01em;
+    font-family: var(--font-display);
+    letter-spacing: 0.005em;
   }
 
+  /* Varsity block lettering: the wordmark only. */
+  .font-varsity {
+    font-family: var(--font-varsity);
+    letter-spacing: 0.01em;
+  }
+
+  /* Compact label face (position badges). */
   .font-semi-condensed {
-    font-stretch: 87.5%;
+    font-family: var(--font-display);
+    letter-spacing: 0.04em;
+  }
+
+  /* Red / white / red trim, like a varsity jacket cuff. */
+  .varsity-stripe {
+    height: 8px;
+    background: linear-gradient(
+      to bottom,
+      var(--accent) 0 3px,
+      #ffffff 3px 5px,
+      var(--accent) 5px 8px
+    );
   }
 
   /* Every stat lines up in columns. */

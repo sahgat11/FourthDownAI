@@ -11,6 +11,7 @@ export function StatTile({
   unit,
   detail,
   emphasis = false,
+  compact = false,
   className,
 }: {
   label: string;
@@ -18,6 +19,8 @@ export function StatTile({
   unit?: string;
   detail?: ReactNode;
   emphasis?: boolean;
+  /** Smaller numerals for supporting stats (not a page's headline figure). */
+  compact?: boolean;
   className?: string;
 }) {
   return (
@@ -32,7 +35,8 @@ export function StatTile({
       <span className="flex items-baseline gap-1.5">
         <span
           className={cn(
-            "font-display text-[2.5rem] leading-none font-extrabold xs:text-4xl sm:text-5xl",
+            "font-display leading-none font-extrabold",
+            compact ? "text-4xl" : "text-[2.5rem] xs:text-4xl sm:text-5xl",
             emphasis ? "text-ink" : "text-ink-2",
           )}
         >

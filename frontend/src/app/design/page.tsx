@@ -32,25 +32,25 @@ const breakouts = breakoutsJson as BreakoutsFile;
 const waivers = waiversJson as WaiversFile;
 
 const swatches: { token: string; name: string; light: string; dark: string; use: string }[] = [
-  { token: "--fog", name: "Fog", light: "#eef0ef", dark: "#0f1316", use: "Page background" },
-  { token: "--surface", name: "Surface", light: "#fbfbfa", dark: "#161b20", use: "Panels and tables" },
-  { token: "--surface-sunk", name: "Sunk", light: "#f2f4f3", dark: "#1c2228", use: "Headers, hover, inputs" },
-  { token: "--rule", name: "Rule", light: "#d7dcdf", dark: "#29313a", use: "Borders and dividers" },
-  { token: "--ink", name: "Ink", light: "#172026", dark: "#e8ecee", use: "Primary text" },
-  { token: "--ink-2", name: "Ink 2", light: "#46515a", dark: "#b3bcc3", use: "Secondary text" },
-  { token: "--muted", name: "Muted", light: "#646e76", dark: "#8d979f", use: "Captions" },
-  { token: "--accent", name: "Bridge", light: "#c0362c", dark: "#e5563f", use: "The model, active state, primary action" },
-  { token: "--brass", name: "Brass", light: "#7a5c17", dark: "#d3a84f", use: "Breakout signal only" },
-  { token: "--series-baseline", name: "Bay", light: "#2f72a8", dark: "#4c8cc4", use: "Baseline series in charts" },
+  { token: "--fog", name: "Chalk", light: "#f4f2ec", dark: "#0b162c", use: "Page background" },
+  { token: "--surface", name: "Surface", light: "#ffffff", dark: "#13223f", use: "Panels and tables" },
+  { token: "--surface-sunk", name: "Sunk", light: "#eef0f4", dark: "#1a2b4c", use: "Headers, hover, inputs" },
+  { token: "--rule", name: "Rule", light: "#d9dde5", dark: "#26385c", use: "Borders and dividers" },
+  { token: "--ink", name: "Navy", light: "#0e1c36", dark: "#eef1f7", use: "Primary text" },
+  { token: "--ink-2", name: "Ink 2", light: "#3b4a66", dark: "#aeb9cf", use: "Secondary text" },
+  { token: "--muted", name: "Muted", light: "#5d6a80", dark: "#8c98b1", use: "Captions" },
+  { token: "--accent", name: "Varsity red", light: "#b8122e", dark: "#e8475a", use: "The model, active state, primary action" },
+  { token: "--brass", name: "Old gold", light: "#7a5c17", dark: "#d9ae52", use: "Breakout signal only" },
+  { token: "--series-baseline", name: "Varsity blue", light: "#2c5aa0", dark: "#5b8fd6", use: "Baseline series in charts" },
 ];
 
 const typeScale = [
-  { cls: "font-display text-5xl font-extrabold", size: "72 / condensed 800", sample: points(projections.players[0]?.projected_points) },
-  { cls: "font-display text-4xl font-extrabold", size: "48 / condensed 800", sample: "Week " + meta.projection_week + " projections" },
-  { cls: "font-display text-3xl font-bold", size: "36 / condensed 700", sample: "Breakout watch" },
-  { cls: "text-2xl font-semibold", size: "24 / 600", sample: "Model vs baseline" },
+  { cls: "font-display text-5xl font-extrabold", size: "72 / Big Shoulders 800", sample: points(projections.players[0]?.projected_points) },
+  { cls: "font-display text-4xl font-extrabold", size: "48 / Big Shoulders 800", sample: "Week " + meta.projection_week + " projections" },
+  { cls: "font-display text-3xl font-bold", size: "36 / Big Shoulders 700", sample: "Breakout watch" },
+  { cls: "font-display text-2xl font-bold", size: "24 / Big Shoulders 700", sample: "Model vs baseline" },
   { cls: "text-lg font-semibold", size: "18 / 600", sample: "Error by week" },
-  { cls: "text-base", size: "16 / 400", sample: metrics.evaluation.description },
+  { cls: "text-base", size: "16 / Barlow 400", sample: metrics.evaluation.description },
   { cls: "text-sm text-ink-2", size: "14 / 400", sample: "Table body, labels and controls." },
   { cls: "text-xs text-muted", size: "12 / 400", sample: "Captions and footnotes." },
 ];
@@ -61,7 +61,7 @@ function Section({ title, note, children }: { title: string; note?: string; chil
   return (
     <section className="flex flex-col gap-4 border-t border-rule pt-8">
       <div className="flex flex-col gap-1">
-        <h2 className="text-2xl font-semibold">{title}</h2>
+        <h2 className="text-3xl font-extrabold">{title}</h2>
         {note && <p className="max-w-[62ch] text-sm text-ink-2">{note}</p>}
       </div>
       {children}
@@ -91,7 +91,7 @@ export default function DesignPage() {
 
       <Section
         title="Color"
-        note="Bay Area neutrals with one accent. Bridge orange marks the model and anything active; brass is reserved for breakout signals; Bay blue appears only as the baseline series. Use the toggle in the header to check the dark set."
+        note="Varsity navy and red. Red marks the model and anything active; old gold is reserved for breakout signals; varsity blue appears only as the baseline series. Use the toggle in the header to check the dark set."
       >
         <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5">
           {swatches.map((s) => (
@@ -111,7 +111,7 @@ export default function DesignPage() {
 
       <Section
         title="Type"
-        note="One family, Archivo, used at two widths. Condensed heavy weights carry headlines and stat numerals; normal width carries reading text. All figures are tabular so columns of numbers align."
+        note="Big Shoulders Display, a stadium-signage face, carries headlines and stat numerals; Barlow carries reading text; Graduate's varsity lettering is reserved for the wordmark. Table figures are tabular so columns of numbers align."
       >
         <div className="flex flex-col divide-y divide-rule rounded-lg border border-rule bg-surface">
           {typeScale.map((t) => (

@@ -30,6 +30,14 @@ export interface PlayerRecord {
   headshot_url: string | null;
 }
 
+/** One past game, oldest first (see DATA_SCHEMA.md "Game history"). */
+export interface GameLine {
+  week: number;
+  points: number | null;
+  touches: number | null;
+  target_share: number | null;
+}
+
 export interface BreakoutPlayer extends PlayerRecord {
   breakout_score: number;
   projection_gain: number;
@@ -41,6 +49,7 @@ export interface BreakoutPlayer extends PlayerRecord {
     opportunity: number;
     target_share: number;
   };
+  history: GameLine[];
 }
 
 export interface WaiverPlayer extends PlayerRecord {
@@ -48,6 +57,7 @@ export interface WaiverPlayer extends PlayerRecord {
   breakout_score: number;
   is_breakout: boolean;
   sleeper_adds_48h: number | null;
+  history: GameLine[];
 }
 
 interface WeekScoped {

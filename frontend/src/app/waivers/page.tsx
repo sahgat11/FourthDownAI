@@ -34,7 +34,7 @@ export default function WaiversPage() {
       </PageHeader>
       <WaiversView />
       <section className="mt-8 grid gap-6 border-t border-rule pt-8 md:grid-cols-[1fr_2fr]">
-        <h2 className="text-lg font-semibold">How the score works</h2>
+        <h2 className="text-2xl font-extrabold">How the score works</h2>
         <div className="flex max-w-[62ch] flex-col gap-3 text-sm text-ink-2">
           <p>
             Among players projected for at least {points(criteria.min_projected_points)} points

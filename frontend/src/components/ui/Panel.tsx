@@ -20,7 +20,7 @@ export function Panel({
       {(title || actions) && (
         <header className="mb-4 flex flex-wrap items-start justify-between gap-3">
           <div className="flex flex-col gap-1">
-            {title && <h2 className="text-lg font-semibold">{title}</h2>}
+            {title && <h2 className="text-xl font-bold">{title}</h2>}
             {description && <p className="max-w-prose text-sm text-ink-2">{description}</p>}
           </div>
           {actions}

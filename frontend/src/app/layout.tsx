@@ -5,14 +5,30 @@ import { themeInitScript } from "@/components/layout/theme";
 import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
-// Archivo variable (wdth 62–125, wght 100–900), self-hosted from
-// @fontsource-variable/archivo (SIL Open Font License).
-const archivo = localFont({
-  src: "../../node_modules/@fontsource-variable/archivo/files/archivo-latin-wdth-normal.woff2",
-  variable: "--font-archivo",
+// Self-hosted from Fontsource (all SIL Open Font License):
+// Barlow for reading text, Big Shoulders Display for headlines and stat
+// numerals, Graduate (varsity block lettering) for the wordmark only.
+const barlow = localFont({
+  src: [
+    { path: "../../node_modules/@fontsource/barlow/files/barlow-latin-400-normal.woff2", weight: "400" },
+    { path: "../../node_modules/@fontsource/barlow/files/barlow-latin-500-normal.woff2", weight: "500" },
+    { path: "../../node_modules/@fontsource/barlow/files/barlow-latin-600-normal.woff2", weight: "600" },
+    { path: "../../node_modules/@fontsource/barlow/files/barlow-latin-700-normal.woff2", weight: "700" },
+  ],
+  variable: "--font-barlow",
+  display: "swap",
+});
+const bigShoulders = localFont({
+  src: "../../node_modules/@fontsource-variable/big-shoulders-display/files/big-shoulders-display-latin-wght-normal.woff2",
+  variable: "--font-big-shoulders",
   weight: "100 900",
   display: "swap",
-  declarations: [{ prop: "font-stretch", value: "62% 125%" }],
+});
+const graduate = localFont({
+  src: "../../node_modules/@fontsource/graduate/files/graduate-latin-400-normal.woff2",
+  variable: "--font-graduate",
+  weight: "400",
+  display: "swap",
 });
 
 const description =
@@ -36,14 +52,18 @@ export const metadata: Metadata = {
 
 export const viewport: Viewport = {
   themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#fbfbfa" },
-    { media: "(prefers-color-scheme: dark)", color: "#161b20" },
+    { media: "(prefers-color-scheme: light)", color: "#0e1c36" },
+    { media: "(prefers-color-scheme: dark)", color: "#08111f" },
   ],
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
   return (
-    <html lang="en" className={archivo.variable} suppressHydrationWarning>
+    <html
+      lang="en"
+      className={`${barlow.variable} ${bigShoulders.variable} ${graduate.variable}`}
+      suppressHydrationWarning
+    >
       <head>
         <script dangerouslySetInnerHTML={{ __html: themeInitScript }} />
       </head>
@@ -58,8 +78,9 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <main id="main" className="mx-auto w-full max-w-[1240px] flex-1 px-4 py-8 sm:px-8 sm:py-12">
           {children}
         </main>
-        <footer className="border-t border-rule">
-          <div className="mx-auto flex max-w-[1240px] flex-wrap justify-between gap-2 px-4 py-6 text-sm text-muted sm:px-8">
+        <footer className="bg-header">
+          <div aria-hidden className="varsity-stripe" />
+          <div className="mx-auto flex max-w-[1240px] flex-wrap justify-between gap-2 px-4 py-6 text-sm text-header-ink-2 sm:px-8">
             <span>Player data from nflverse. PPR scoring, RB/WR/TE only.</span>
             <span>Projections are estimates, not advice.</span>
           </div>

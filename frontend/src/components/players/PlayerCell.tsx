@@ -1,3 +1,4 @@
+import { PlayerAvatar } from "@/components/feed/PlayerAvatar";
 import { Matchup } from "@/components/ui/Matchup";
 import { PositionBadge } from "@/components/ui/PositionBadge";
 import type { PlayerRecord } from "@/lib/types";
@@ -9,6 +10,7 @@ import type { PlayerRecord } from "@/lib/types";
 export function PlayerCell({ player, children }: { player: PlayerRecord; children?: React.ReactNode }) {
   return (
     <span className="flex items-center gap-2.5">
+      <PlayerAvatar player={player} size={32} />
       <PositionBadge position={player.position} />
       <span className="flex min-w-0 flex-col">
         <span className="flex flex-wrap items-center gap-x-2 gap-y-0.5">
