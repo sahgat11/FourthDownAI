@@ -216,3 +216,17 @@ def test_new_data_is_reported_as_changed(output, tmp_path):
     assert changed is True
     meta = json.loads((tmp_path / "meta.json").read_text())
     assert meta["data_through_week"] == 5
+
+
+def test_breakout_and_waiver_history(output):
+    _, files, _ = output
+    for name in ("breakouts.json", "waivers.json"):
+        for p in files[name]["players"]:
+            history = p["history"]
+            assert 1 <= len(history) <= precompute.HISTORY_GAMES
+            weeks = [g["week"] for g in history]
+            assert weeks == sorted(weeks)
+            assert weeks[-1] == p["data_week"]
+            assert history[-1]["points"] == p["last_week_points"]
+            for g in history:
+                assert set(g) == {"week", "points", "touches", "target_share"}

@@ -11,7 +11,7 @@ export function PositionBadge({ position }: { position: Position }) {
   return (
     <abbr
       title={names[position]}
-      className="inline-flex h-5 w-8 shrink-0 items-center justify-center rounded-sm border border-rule-strong text-[11px] font-semibold text-ink-2 no-underline font-semi-condensed"
+      className="inline-flex h-5 w-8 shrink-0 items-center justify-center rounded-sm border border-rule-strong text-[12.5px] font-bold text-ink-2 no-underline font-semi-condensed"
     >
       {position}
     </abbr>

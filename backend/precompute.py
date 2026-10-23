@@ -348,10 +348,41 @@ def build_projections(base, pool, matchups, projection_week):
     }
 
 
+HISTORY_GAMES = 4
+
+
+def build_history(base, games=HISTORY_GAMES):
+    """
+    Each player's last few games this season (oldest first): PPR points,
+    touches (carries + targets) and target share. Powers the trend lines
+    and "why" chips on breakout and waiver cards.
+    """
+
+    rows = base["features"]
+    rows = rows[
+        (rows["season"] == base["season"])
+        & (rows["week"] <= base["completed_week"])
+    ].sort_values(["player_id", "week"])
+
+    history = {}
+    for player_id, group in rows.groupby("player_id"):
+        recent = group.tail(games)
+        history[player_id] = [
+            {
+                "week": int(r["week"]),
+                "points": clean(r["fantasy_points_ppr"]),
+                "touches": clean(r["opportunities"]),
+                "target_share": clean(r["target_share"], 3),
+            }
+            for _, r in recent.iterrows()
+        ]
+    return history
+
+
 # -------------------------------------------------------------- breakouts
 
 
-def build_breakouts(base, pool, matchups, projection_week):
+def build_breakouts(base, pool, matchups, projection_week, history=None):
     breakouts = base["breakouts"].merge(
         pool[["player_id", "position_rank", "season_ppr", "games"]],
         on="player_id",
@@ -366,6 +397,7 @@ def build_breakouts(base, pool, matchups, projection_week):
                 "projection_gain": clean(row["projection_gain"]),
                 "opportunity_change": clean(row["opportunity_change"]),
                 "target_share_change": clean(row["target_share_change"], 3),
+                "history": (history or {}).get(row["player_id"], []),
                 "components": {
                     "gain": clean(row["gain_score"] * 100, 1),
                     "projection": clean(row["projection_score"] * 100, 1),
@@ -440,7 +472,7 @@ def likely_rostered_ids(pool):
     return ids
 
 
-def build_waivers(base, pool, matchups, projection_week, trending):
+def build_waivers(base, pool, matchups, projection_week, trending, history=None):
     candidates = filter_waiver_pool(
         pool,
         base["completed_week"],
@@ -466,6 +498,7 @@ def build_waivers(base, pool, matchups, projection_week, trending):
                     if trending is not None
                     else None
                 ),
+                "history": (history or {}).get(row["player_id"], []),
             }
         )
         players.append(record)
@@ -618,8 +651,9 @@ def run(stats=None, out_dir=STATIC_DATA_DIR, use_sleeper=True):
     pool = active_pool(base, matchups if schedule_ok else None)
     metrics = build_metrics(base)
     projections = build_projections(base, pool, matchups, projection_week)
-    breakouts = build_breakouts(base, pool, matchups, projection_week)
-    waivers = build_waivers(base, pool, matchups, projection_week, trending)
+    history = build_history(base)
+    breakouts = build_breakouts(base, pool, matchups, projection_week, history)
+    waivers = build_waivers(base, pool, matchups, projection_week, trending, history)
 
     if not schedule_ok:
         for payload in (projections, breakouts, waivers):

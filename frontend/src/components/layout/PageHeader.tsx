@@ -20,7 +20,7 @@ export function PageHeader({
   children?: ReactNode;
 }) {
   return (
-    <div className="flex flex-col gap-4 pb-6 sm:pb-8">
+    <div className="flex flex-col gap-3 pb-6">
       {freshness && (
         <p className="text-sm text-ink-2">
           <span className="font-semibold text-ink">
@@ -32,7 +32,7 @@ export function PageHeader({
           </span>
         </p>
       )}
-      <h1 className="font-display text-4xl font-extrabold text-balance sm:text-5xl">{title}</h1>
+      <h1 className="font-display text-4xl leading-[0.95] font-extrabold text-balance">{title}</h1>
       {description && <div className="max-w-[62ch] text-base text-ink-2">{description}</div>}
       {children}
     </div>

@@ -28,7 +28,7 @@ export default function BreakoutsPage() {
       />
       <BreakoutsView />
       <section className="mt-8 grid gap-6 border-t border-rule pt-8 md:grid-cols-[1fr_2fr]">
-        <h2 className="text-lg font-semibold">How the score works</h2>
+        <h2 className="text-2xl font-extrabold">How the score works</h2>
         <div className="flex max-w-[62ch] flex-col gap-3 text-sm text-ink-2">
           <p>
             Each candidate is compared with others at the same position. The score blends four

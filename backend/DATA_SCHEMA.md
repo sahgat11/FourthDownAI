@@ -134,7 +134,8 @@ Rows from the latest completed week whose projection is ≥ 7 and at least
     "projection_gain": 3.89,         // projected_points - recent_avg
     "opportunity_change": 4.0,       // carries+targets vs previous game
     "target_share_change": 0.052,
-    "components": { "gain": 96.4, "projection": 81.0, "opportunity": 70.2, "target_share": 88.1 }  // within-position percentiles x100
+    "components": { "gain": 96.4, "projection": 81.0, "opportunity": 70.2, "target_share": 88.1 },  // within-position percentiles x100
+    "history": [ /* game history, see below */ ]
   }]
 }
 ```
@@ -165,10 +166,23 @@ rostered in a typical 12-team league and excluded. The remaining pool
     "waiver_score": 89.5,            // 0-100, sorted desc
     "breakout_score": 0.0,           // 0 when not a breakout candidate
     "is_breakout": false,
-    "sleeper_adds_48h": null         // Sleeper trending adds (48h); null if Sleeper unreachable
+    "sleeper_adds_48h": null,        // Sleeper trending adds (48h); null if Sleeper unreachable
+    "history": [ /* game history, see below */ ]
   }]
 }
 ```
+
+## Game history (`history` on breakout and waiver players)
+
+The player's last up-to-4 games this season, oldest first. The last entry
+is always `data_week`.
+
+```jsonc
+[{ "week": 3, "points": 8.4, "touches": 6, "target_share": 0.12 },
+ { "week": 6, "points": 21.0, "touches": 11, "target_share": 0.31 }]
+```
+
+`touches` is carries + targets. Weeks can skip (byes, injuries).
 
 ## League-specific mode (optional, local)
 

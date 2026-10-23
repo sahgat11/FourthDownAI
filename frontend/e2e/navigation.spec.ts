@@ -2,7 +2,7 @@ import { expect, test } from "@playwright/test";
 import { data, isPhone } from "./helpers";
 
 const pages = [
-  { path: "/", link: "Overview", h1: "Next week's fantasy points, projected" },
+  { path: "/", link: "Overview", h1: `Week ${data.meta.projection_week} fantasy moves` },
   { path: "/projections", link: "Projections", h1: `Week ${data.meta.projection_week} projections` },
   { path: "/breakouts", link: "Breakouts", h1: "Breakout watch" },
   { path: "/waivers", link: "Waivers", h1: "Waiver targets" },
@@ -20,13 +20,15 @@ test("main nav reaches every page and marks the current one", async ({ page }) =
   }
 });
 
-test("every page shows the same data freshness line", async ({ page }) => {
+test("every page says which data it shows", async ({ page }) => {
   const { season, projection_week, data_through_week } = data.meta;
-  for (const p of pages) {
+  for (const p of pages.slice(1)) {
     await page.goto(p.path);
     await expect(page.getByText(`${season} season, week ${projection_week}`)).toBeVisible();
     await expect(page.getByText(`projections from data through week ${data_through_week}`)).toBeVisible();
   }
+  await page.goto("/");
+  await expect(page.getByText(`${season} season, data through week ${data_through_week}`)).toBeVisible();
 });
 
 test("pages have distinct titles", async ({ page }) => {
@@ -56,7 +58,7 @@ test("theme toggle switches and remembers the theme", async ({ page }) => {
   await page.getByRole("button", { name: "Switch to dark theme" }).click();
   await expect(html).toHaveAttribute("data-theme", "dark");
   const background = await page.evaluate(() => getComputedStyle(document.body).backgroundColor);
-  expect(background).toBe("rgb(15, 19, 22)");
+  expect(background).toBe("rgb(11, 22, 44)");
 
   await page.reload();
   await expect(html).toHaveAttribute("data-theme", "dark");

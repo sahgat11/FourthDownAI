@@ -40,7 +40,7 @@ export function ThemeToggle() {
       type="button"
       onClick={apply}
       aria-label={theme ? `Switch to ${next} theme` : "Switch theme"}
-      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-ink-2 hover:bg-surface-sunk hover:text-ink"
+      className="inline-flex h-9 w-9 items-center justify-center rounded-md text-header-ink-2 hover:bg-white/10 hover:text-header-ink"
     >
       <svg aria-hidden width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round">
         {theme === "dark" ? (
