@@ -39,6 +39,7 @@
   --header-ink: #ffffff;
   --header-ink-2: #c9d3e6;
   --header-rule: #24365a;
+  --header-accent: #f0566a;  /* red that reads on navy */
 
   --focus: #b8122e;
   --shadow-pop: 0 1px 2px rgb(14 28 54 / 0.08), 0 8px 24px rgb(14 28 54 / 0.12);
@@ -68,6 +69,7 @@
     --header-ink: #ffffff;
     --header-ink-2: #c9d3e6;
     --header-rule: #1d2d4d;
+  --header-accent: #f0566a;
     --focus: #ff6b7a;
     --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px rgb(0 0 0 / 0.4);
   }
@@ -96,6 +98,7 @@
   --header-ink: #ffffff;
   --header-ink-2: #c9d3e6;
   --header-rule: #1d2d4d;
+  --header-accent: #f0566a;
   --focus: #ff6b7a;
   --shadow-pop: 0 1px 2px rgb(0 0 0 / 0.35), 0 8px 24px rgb(0 0 0 / 0.4);
 }
@@ -122,6 +125,7 @@
   --color-header-ink: var(--header-ink);
   --color-header-ink-2: var(--header-ink-2);
   --color-header-rule: var(--header-rule);
+  --color-header-accent: var(--header-accent);
 
   --font-sans: var(--font-barlow), ui-sans-serif, system-ui, sans-serif;
   --font-display: var(--font-big-shoulders), var(--font-barlow), ui-sans-serif, sans-serif;

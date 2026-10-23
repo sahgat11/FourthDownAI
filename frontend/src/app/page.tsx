@@ -3,6 +3,7 @@ import { StoryCard } from "@/components/feed/StoryCard";
 import { Ticker } from "@/components/feed/Ticker";
 import { WaiverSidebar } from "@/components/feed/WaiverSidebar";
 import { AccuracySection } from "@/components/overview/AccuracySection";
+import { EdgeBand } from "@/components/overview/EdgeBand";
 import { StatTile } from "@/components/ui/StatTile";
 import { breakouts, meta, metrics, projections, waivers } from "@/lib/data";
 import { count, metric, percent, updatedAt } from "@/lib/format";
@@ -60,6 +61,8 @@ export default function OverviewPage() {
         </div>
         {lead && <StoryCard player={lead} lead />}
       </section>
+
+      <EdgeBand breakouts={breakouts} waivers={waivers} />
 
       <div className="grid grid-cols-1 items-start gap-8 lg:grid-cols-[minmax(0,2fr)_minmax(0,1fr)]">
         <section aria-labelledby="breakouts" className="flex flex-col gap-4">
