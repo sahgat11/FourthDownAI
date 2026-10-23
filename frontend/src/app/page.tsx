@@ -1,367 +1,185 @@
-"use client";
+import { ChartFigure, SimpleTable } from "@/components/charts/ChartFigure";
+import { CalibrationPlot } from "@/components/charts/CalibrationPlot";
+import { ImportanceBars } from "@/components/charts/ImportanceBars";
+import { PageHeader } from "@/components/layout/PageHeader";
+import { AccuracySection } from "@/components/overview/AccuracySection";
+import { ThisWeekList } from "@/components/overview/ThisWeekList";
+import { StatTile } from "@/components/ui/StatTile";
+import { breakouts, freshness, meta, metrics, projections, waivers } from "@/lib/data";
+import { count, metric, percent, points } from "@/lib/format";
 
-import { useEffect, useState } from "react";
-
-const API_URL = "http://127.0.0.1:8000";
-
-const LEAGUE_ID = "1404003994883362816";
-const USERNAME = "sahgat11";
-
-type ModelInfo = {
-  season: number;
-  completed_week: number;
-  test_records: number;
-  baseline_mae: number;
-  xgboost_mae: number;
-  improvement_percent: number;
-};
-
-type Recommendation = {
-  add_player: string;
-  add_position: string;
-  add_team: string;
-  add_projection: number;
-
-  drop_player: string;
-  drop_position: string;
-  drop_team: string;
-  drop_projection: number;
-
-  starter_gain: number;
-  asset_gain: number;
-  breakout_score: number;
-
-  move_type: string;
-  confidence: string;
-  reason: string;
-};
-
-type RecommendationResponse = {
-  league_id: string;
-  league_name: string;
-  username: string;
-  week: number;
-  recommendations: Recommendation[];
-};
-
-export default function Home() {
-  const [model, setModel] =
-    useState<ModelInfo | null>(null);
-
-  const [recommendations, setRecommendations] =
-    useState<Recommendation[]>([]);
-
-  const [week, setWeek] =
-    useState<number | null>(null);
-
-  const [loading, setLoading] =
-    useState(true);
-
-  const [error, setError] =
-    useState("");
-
-  useEffect(() => {
-    async function loadDashboard() {
-      try {
-        const modelResponse = await fetch(
-          `${API_URL}/api/model`
-        );
-
-        if (!modelResponse.ok) {
-          throw new Error(
-            "Could not load model information."
-          );
-        }
-
-        const modelData: ModelInfo =
-          await modelResponse.json();
-
-        setModel(modelData);
-
-        const recommendationResponse =
-          await fetch(
-            `${API_URL}/api/recommendations?league_id=${LEAGUE_ID}&username=${USERNAME}`
-          );
-
-        if (!recommendationResponse.ok) {
-          throw new Error(
-            "Could not load recommendations."
-          );
-        }
-
-        const recommendationData:
-          RecommendationResponse =
-            await recommendationResponse.json();
-
-        setRecommendations(
-          recommendationData.recommendations
-        );
-
-        setWeek(
-          recommendationData.week
-        );
-      } catch (err) {
-        if (err instanceof Error) {
-          setError(err.message);
-        } else {
-          setError(
-            "Something went wrong."
-          );
-        }
-      } finally {
-        setLoading(false);
-      }
-    }
-
-    loadDashboard();
-  }, []);
+export default function OverviewPage() {
+  const { evaluation, improvement } = metrics;
+  const topProjections = projections.players.filter((p) => !p.on_bye).slice(0, 5);
+  const importance = metrics.feature_importance;
+  const topTwoShare = (importance[0].importance + importance[1].importance) * 100;
+  const firstTrain = evaluation.train_seasons[0];
+  const lastTrain = evaluation.train_seasons[evaluation.train_seasons.length - 1];
+  const weeks = evaluation.target_weeks;
 
   return (
-    <main className="min-h-screen bg-zinc-950 text-white">
-      <div className="mx-auto max-w-7xl px-6 py-10">
+    <div className="flex flex-col gap-14">
+      <PageHeader
+        title="Next week's fantasy points, projected"
+        freshness={freshness}
+        description={
+          <p>
+            FourthDown projects PPR points for every active running back, receiver and tight end
+            from their last three weeks of usage. Then it grades itself against the simplest
+            alternative: assuming each player repeats his 3-week average.
+          </p>
+        }
+      />
 
-        <header className="mb-10 flex items-center justify-between">
-          <div>
-            <div className="mb-2 text-sm font-semibold uppercase tracking-[0.25em] text-emerald-400">
-              Fantasy Intelligence
+      <section aria-labelledby="results" className="flex flex-col gap-6">
+        <div className="flex flex-col gap-1">
+          <h2 id="results" className="text-2xl font-semibold">
+            How it did this season
+          </h2>
+          <p className="max-w-[62ch] text-ink-2">
+            {count(evaluation.test_rows)} player-weeks from {evaluation.test_season} weeks{" "}
+            {weeks[0]}–{weeks[weeks.length - 1]}, none of which the model saw in training.
+          </p>
+        </div>
+        <div className="grid grid-cols-2 gap-x-5 gap-y-8 sm:gap-x-8 lg:grid-cols-4">
+          <StatTile
+            emphasis
+            label="XGBoost mean absolute error"
+            value={metric(metrics.xgboost.mae)}
+            unit="pts"
+            detail={`${percent(improvement.mae_pct)} lower than the baseline`}
+          />
+          <StatTile
+            label="Baseline mean absolute error"
+            value={metric(metrics.baseline.mae)}
+            unit="pts"
+            detail="3-week rolling average"
+          />
+          <StatTile
+            emphasis
+            label="XGBoost RMSE"
+            value={metric(metrics.xgboost.rmse)}
+            unit="pts"
+            detail={`${percent(improvement.rmse_pct)} lower; fewer big misses`}
+          />
+          <StatTile
+            label="Baseline RMSE"
+            value={metric(metrics.baseline.rmse)}
+            unit="pts"
+            detail="3-week rolling average"
+          />
+        </div>
+      </section>
+
+      <section aria-labelledby="this-week" className="flex flex-col gap-4">
+        <h2 id="this-week" className="text-2xl font-semibold">
+          Week {meta.projection_week} at a glance
+        </h2>
+        <div className="grid gap-4 md:grid-cols-3">
+          <ThisWeekList
+            title="Top projections"
+            description="Highest projected PPR points, bye weeks excluded."
+            players={topProjections}
+            value={(p) => <span className="font-semibold">{points(p.projected_points)}</span>}
+            href="/projections"
+            linkLabel={`All ${count(projections.count)} projections`}
+          />
+          <ThisWeekList
+            title="Breakout watch"
+            description="Highest breakout scores, with projected gain over the 3-week average."
+            players={breakouts.players.slice(0, 5)}
+            value={(p) => <span className="text-ink-2">+{points(p.projection_gain)}</span>}
+            href="/breakouts"
+            linkLabel={`All ${count(breakouts.count)} breakout candidates`}
+          />
+          <ThisWeekList
+            title="Waiver targets"
+            description="Highest waiver scores among likely-available players, with projections."
+            players={waivers.players.slice(0, 5)}
+            value={(p) => <span className="font-semibold">{points(p.projected_points)}</span>}
+            href="/waivers"
+            linkLabel={`All ${count(waivers.count)} waiver targets`}
+          />
+        </div>
+      </section>
+
+      <section aria-labelledby="accuracy" className="flex flex-col gap-4">
+        <div className="flex flex-col gap-1">
+          <h2 id="accuracy" className="text-2xl font-semibold">
+            Where the edge comes from
+          </h2>
+          <p className="max-w-[62ch] text-ink-2">
+            Both models predict the same games. The gap holds across weeks and positions rather
+            than coming from one lucky stretch.
+          </p>
+        </div>
+        <AccuracySection metrics={metrics} />
+        <div className="grid gap-4 lg:grid-cols-2">
+          <ChartFigure
+            title="Are the projections honest?"
+            note="Player-weeks grouped by projection. Dots on the line mean players scored what was projected, on average; above it, they beat the projection."
+            table={
+              <SimpleTable
+                head={["Projected", "Avg projection", "Avg result", "Player-weeks"]}
+                rows={metrics.calibration.map((b) => [
+                  b.predicted_max == null ? `${b.predicted_min}+` : `${b.predicted_min}–${b.predicted_max}`,
+                  points(b.mean_predicted),
+                  points(b.mean_actual),
+                  count(b.n),
+                ])}
+              />
+            }
+          >
+            <CalibrationPlot bins={metrics.calibration} />
+          </ChartFigure>
+          <ChartFigure
+            title="What the model relies on"
+            note={`Share of the model's gain from each input. ${importance[0].label} and ${importance[1].label.toLowerCase()} account for ${percent(topTwoShare)}.`}
+            table={
+              <SimpleTable
+                head={["Input", "Share"]}
+                rows={importance.map((f) => [f.label, `${(f.importance * 100).toFixed(1)}%`])}
+              />
+            }
+          >
+            <ImportanceBars items={importance.slice(0, 8)} />
+            <p className="text-xs text-muted">Top 8 of {importance.length} inputs. The table lists all of them.</p>
+          </ChartFigure>
+        </div>
+      </section>
+
+      <section aria-labelledby="method" className="grid gap-8 border-t border-rule pt-10 lg:grid-cols-[2fr_3fr]">
+        <div className="flex flex-col gap-3">
+          <h2 id="method" className="text-2xl font-semibold">
+            How it&apos;s tested
+          </h2>
+          <p className="text-ink-2">
+            The model is trained on {firstTrain}–{lastTrain} and scored on {evaluation.test_season}.
+            Every row uses a player&apos;s stats through week N to predict his PPR points in week
+            N+1, so results from the predicted week never leak into its own projection. The
+            baseline is scored on exactly the same rows.
+          </p>
+          <p className="text-ink-2">
+            The live projections come from the same setup, retrained with every completed week
+            of {meta.season} included.
+          </p>
+        </div>
+        <dl className="grid grid-cols-2 gap-x-6 gap-y-5 self-start text-sm sm:grid-cols-3">
+          {[
+            ["Model", meta.model.name],
+            ["Target", meta.model.target],
+            ["Inputs", `${meta.model.features.length} rolling usage stats`],
+            ["Training rows", count(evaluation.train_rows)],
+            ["Test rows", count(evaluation.test_rows)],
+            ["Trees / depth", `${meta.model.params.n_estimators} / ${meta.model.params.max_depth}`],
+          ].map(([term, detail]) => (
+            <div key={term} className="flex flex-col gap-1 border-t border-rule pt-2">
+              <dt className="text-muted">{term}</dt>
+              <dd className="font-medium text-ink">{detail}</dd>
             </div>
-
-            <h1 className="text-4xl font-bold tracking-tight">
-              FourthDown AI
-            </h1>
-
-            <p className="mt-2 text-zinc-400">
-              Machine learning powered fantasy football decisions.
-            </p>
-          </div>
-
-          <div className="rounded-full border border-emerald-500/30 bg-emerald-500/10 px-4 py-2 text-sm font-medium text-emerald-400">
-            Week {week ?? "..."}
-          </div>
-        </header>
-
-        {loading && (
-          <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-zinc-400">
-            Loading FourthDown analysis...
-          </div>
-        )}
-
-        {error && (
-          <div className="rounded-2xl border border-red-900 bg-red-950/40 p-6 text-red-300">
-            {error}
-          </div>
-        )}
-
-        {!loading && !error && (
-          <>
-            <section className="mb-10 grid gap-4 md:grid-cols-4">
-
-              <StatCard
-                label="XGBoost MAE"
-                value={
-                  model
-                    ? model.xgboost_mae.toFixed(2)
-                    : "-"
-                }
-              />
-
-              <StatCard
-                label="Baseline MAE"
-                value={
-                  model
-                    ? model.baseline_mae.toFixed(2)
-                    : "-"
-                }
-              />
-
-              <StatCard
-                label="Improvement"
-                value={
-                  model
-                    ? `${model.improvement_percent.toFixed(1)}%`
-                    : "-"
-                }
-              />
-
-              <StatCard
-                label="Test Samples"
-                value={
-                  model
-                    ? model.test_records.toLocaleString()
-                    : "-"
-                }
-              />
-
-            </section>
-
-            <section>
-              <div className="mb-5 flex items-end justify-between">
-                <div>
-                  <h2 className="text-2xl font-semibold">
-                    Recommended Moves
-                  </h2>
-
-                  <p className="mt-1 text-sm text-zinc-400">
-                    Personalized using your Sleeper roster and FourthDown projections.
-                  </p>
-                </div>
-              </div>
-
-              {recommendations.length === 0 ? (
-                <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-8 text-zinc-400">
-                  No meaningful roster upgrades found.
-                </div>
-              ) : (
-                <div className="grid gap-5 lg:grid-cols-2">
-                  {recommendations.map(
-                    (move, index) => (
-                      <RecommendationCard
-                        key={`${move.add_player}-${move.drop_player}`}
-                        move={move}
-                        rank={index + 1}
-                      />
-                    )
-                  )}
-                </div>
-              )}
-            </section>
-          </>
-        )}
-      </div>
-    </main>
-  );
-}
-
-
-function StatCard({
-  label,
-  value,
-}: {
-  label: string;
-  value: string;
-}) {
-  return (
-    <div className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-      <p className="text-sm text-zinc-400">
-        {label}
-      </p>
-
-      <p className="mt-2 text-3xl font-semibold">
-        {value}
-      </p>
+          ))}
+        </dl>
+      </section>
     </div>
-  );
-}
-
-
-function RecommendationCard({
-  move,
-  rank,
-}: {
-  move: Recommendation;
-  rank: number;
-}) {
-  return (
-    <article className="rounded-2xl border border-zinc-800 bg-zinc-900 p-6">
-
-      <div className="mb-6 flex items-start justify-between">
-        <div>
-          <p className="text-xs font-semibold uppercase tracking-wider text-zinc-500">
-            Recommendation {rank}
-          </p>
-
-          <h3 className="mt-1 text-lg font-semibold">
-            {move.move_type}
-          </h3>
-        </div>
-
-        <span
-          className={`rounded-full px-3 py-1 text-xs font-semibold ${
-            move.confidence === "HIGH"
-              ? "bg-emerald-500/15 text-emerald-400"
-              : move.confidence === "MEDIUM"
-                ? "bg-yellow-500/15 text-yellow-400"
-                : "bg-zinc-800 text-zinc-400"
-          }`}
-        >
-          {move.confidence}
-        </span>
-      </div>
-
-      <div className="grid grid-cols-2 gap-4">
-
-        <div className="rounded-xl border border-emerald-500/20 bg-emerald-500/5 p-4">
-          <p className="text-xs font-semibold uppercase text-emerald-400">
-            Add
-          </p>
-
-          <p className="mt-2 font-semibold">
-            {move.add_player}
-          </p>
-
-          <p className="text-sm text-zinc-400">
-            {move.add_position} · {move.add_team}
-          </p>
-
-          <p className="mt-3 text-xl font-semibold">
-            {move.add_projection.toFixed(2)}
-          </p>
-
-          <p className="text-xs text-zinc-500">
-            projected points
-          </p>
-        </div>
-
-        <div className="rounded-xl border border-red-500/20 bg-red-500/5 p-4">
-          <p className="text-xs font-semibold uppercase text-red-400">
-            Drop
-          </p>
-
-          <p className="mt-2 font-semibold">
-            {move.drop_player}
-          </p>
-
-          <p className="text-sm text-zinc-400">
-            {move.drop_position} · {move.drop_team}
-          </p>
-
-          <p className="mt-3 text-xl font-semibold">
-            {move.drop_projection.toFixed(2)}
-          </p>
-
-          <p className="text-xs text-zinc-500">
-            projected points
-          </p>
-        </div>
-
-      </div>
-
-      <div className="mt-5 grid grid-cols-2 gap-4 border-t border-zinc-800 pt-5">
-        <div>
-          <p className="text-xs text-zinc-500">
-            Roster Gain
-          </p>
-
-          <p className="mt-1 font-semibold text-emerald-400">
-            +{move.asset_gain.toFixed(2)}
-          </p>
-        </div>
-
-        <div>
-          <p className="text-xs text-zinc-500">
-            Lineup Gain
-          </p>
-
-          <p className="mt-1 font-semibold text-emerald-400">
-            +{move.starter_gain.toFixed(2)}
-          </p>
-        </div>
-      </div>
-
-      <p className="mt-5 text-sm leading-6 text-zinc-400">
-        {move.reason}
-      </p>
-
-    </article>
   );
 }

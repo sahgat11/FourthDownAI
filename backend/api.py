@@ -12,6 +12,8 @@ from fastapi.middleware.cors import (
     CORSMiddleware,
 )
 
+from config import CORS_ORIGINS
+
 from analysis_service import (
     get_base_analysis,
     get_waiver_analysis,
@@ -30,14 +32,12 @@ app = FastAPI(
 )
 
 
-# Allows our future Next.js frontend
-# to communicate with FastAPI locally.
+# The public site reads static JSON written by
+# precompute.py; this API is the optional local
+# mode for league-specific features.
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:3000",
-        "http://127.0.0.1:3000",
-    ],
+    allow_origins=CORS_ORIGINS,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
@@ -115,6 +115,20 @@ def model_info():
             round(
                 base["ml"][
                     "mae"
+                ],
+                3,
+            ),
+        "baseline_rmse":
+            round(
+                base["baseline"][
+                    "rmse"
+                ],
+                3,
+            ),
+        "xgboost_rmse":
+            round(
+                base["ml"][
+                    "rmse"
                 ],
                 3,
             ),
