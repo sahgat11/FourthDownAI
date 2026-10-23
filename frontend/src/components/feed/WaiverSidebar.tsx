@@ -32,9 +32,14 @@ export function WaiverSidebar({ players, total }: { players: WaiverPlayer[]; tot
           </li>
         ))}
       </ol>
-      <Link href="/waivers" className="block rounded-b-lg border-t border-rule px-4 py-3 text-sm font-semibold text-accent-text hover:bg-surface-sunk">
-        All {total} waiver targets
-      </Link>
+      <div className="flex flex-wrap justify-between gap-2 rounded-b-lg border-t border-rule px-4 py-3 text-sm font-semibold">
+        <Link href="/waivers" className="text-accent-text hover:underline">
+          All {total} waiver targets
+        </Link>
+        <Link href="/league" className="text-ink-2 hover:text-ink hover:underline">
+          Check your league&apos;s wire
+        </Link>
+      </div>
     </section>
   );
 }

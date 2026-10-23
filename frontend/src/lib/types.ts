@@ -152,3 +152,11 @@ export interface MetaFile {
   };
   counts: { projections: number; breakouts: number; waivers: number };
 }
+
+export interface LeaguePlayersFile {
+  schema_version: number;
+  season: number;
+  count: number;
+  /** Sleeper id -> [name, position, team, gsis_id] */
+  players: Record<string, [string, string, string | null, string | null]>;
+}

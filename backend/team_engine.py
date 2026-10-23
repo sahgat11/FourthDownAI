@@ -240,6 +240,7 @@ def build_team_roster(
         projected_points = None
         recent_average = None
         data_week = None
+        on_bye = False
 
         if prediction is not None:
             projected_points = float(
@@ -258,6 +259,15 @@ def build_team_roster(
                 prediction[
                     "week"
                 ]
+            )
+
+            # Present when predictions come from the site's data
+            # (which knows the schedule); absent in the CLI.
+            on_bye = bool(
+                prediction.get(
+                    "on_bye",
+                    False,
+                )
             )
 
         if player_id in reserve_ids:
@@ -302,6 +312,8 @@ def build_team_roster(
                     data_week,
                 "match_method":
                     match_method,
+                "on_bye":
+                    on_bye,
             }
         )
 

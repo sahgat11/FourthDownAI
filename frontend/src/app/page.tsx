@@ -37,11 +37,11 @@ export default function OverviewPage() {
             projections for every RB, WR and TE, from a model that beats the 3-week average.
           </p>
           <div className="flex flex-wrap gap-2">
-            <Link href="/breakouts" className={`${button} bg-accent text-accent-ink hover:bg-accent-hover`}>
-              Breakout watch
+            <Link href="/league" className={`${button} bg-accent text-accent-ink hover:bg-accent-hover`}>
+              Connect your Sleeper league
             </Link>
-            <Link href="/waivers" className={`${button} border border-rule-strong bg-surface text-ink hover:bg-surface-sunk`}>
-              Waiver wire
+            <Link href="/breakouts" className={`${button} border border-rule-strong bg-surface text-ink hover:bg-surface-sunk`}>
+              Breakout watch
             </Link>
             <Link href="/projections" className={`${button} text-ink-2 hover:bg-surface-sunk hover:text-ink`}>
               All projections
