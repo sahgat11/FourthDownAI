@@ -544,14 +544,51 @@ def build_meta(base, projection_week, counts, trending, schedule_ok):
 # ------------------------------------------------------------------- main
 
 
+def _normalized(payload):
+    """JSON round-trip so comparisons match what is on disk."""
+    return json.loads(json.dumps(payload, allow_nan=False))
+
+
+def data_unchanged(outputs, out_dir):
+    """
+    True when every file on disk already holds the same data, ignoring
+    meta.json's generated_at. Lets scheduled refreshes skip no-op commits.
+    """
+
+    out_dir = Path(out_dir)
+    for name, payload in outputs.items():
+        path = out_dir / name
+        if not path.exists():
+            return False
+        try:
+            existing = json.loads(path.read_text())
+        except ValueError:
+            return False
+        new = _normalized(payload)
+        if name == "meta.json":
+            existing = {k: v for k, v in existing.items() if k != "generated_at"}
+            new = {k: v for k, v in new.items() if k != "generated_at"}
+        if existing != new:
+            return False
+    return True
+
+
 def write_outputs(outputs, out_dir):
     """
     Serialize everything first (so a bad value aborts before any file
     changes), then replace each file atomically via a sibling temp file.
+
+    If nothing but the timestamp would change, the previous generated_at
+    is kept so the files stay byte-identical. Returns True when data changed.
     """
 
     out_dir = Path(out_dir)
     out_dir.mkdir(parents=True, exist_ok=True)
+
+    changed = not data_unchanged(outputs, out_dir)
+    if not changed:
+        previous = json.loads((out_dir / "meta.json").read_text())
+        outputs["meta.json"]["generated_at"] = previous["generated_at"]
 
     rendered = {
         name: json.dumps(payload, allow_nan=False, separators=(",", ":")) + "\n"
@@ -561,6 +598,7 @@ def write_outputs(outputs, out_dir):
         temp_path = out_dir / f".{name}.tmp"
         temp_path.write_text(text)
         os.replace(temp_path, out_dir / name)
+    return changed
 
 
 def run(stats=None, out_dir=STATIC_DATA_DIR, use_sleeper=True):
@@ -605,8 +643,8 @@ def run(stats=None, out_dir=STATIC_DATA_DIR, use_sleeper=True):
         "breakouts.json": breakouts,
         "waivers.json": waivers,
     }
-    write_outputs(outputs, out_dir)
-    return outputs
+    changed = write_outputs(outputs, out_dir)
+    return outputs, changed
 
 
 def main():
@@ -634,7 +672,7 @@ def main():
         if args.save_stats:
             stats.to_parquet(args.save_stats)
 
-    outputs = run(stats=stats, out_dir=args.out, use_sleeper=not args.no_sleeper)
+    outputs, changed = run(stats=stats, out_dir=args.out, use_sleeper=not args.no_sleeper)
 
     metrics = outputs["metrics.json"]
     meta = outputs["meta.json"]
@@ -650,6 +688,7 @@ def main():
         f"{metrics['xgboost']['mae']} / RMSE {metrics['xgboost']['rmse']}"
     )
     print(f"Counts: {meta['counts']}")
+    print("Data changed." if changed else "No data changes; kept previous timestamp.")
 
 
 if __name__ == "__main__":

@@ -2,6 +2,7 @@ import type { Metadata, Viewport } from "next";
 import localFont from "next/font/local";
 import { SiteHeader } from "@/components/layout/SiteHeader";
 import { themeInitScript } from "@/components/layout/theme";
+import { SITE_URL } from "@/lib/site";
 import "./globals.css";
 
 // Archivo variable (wdth 62–125, wght 100–900), self-hosted from
@@ -14,13 +15,23 @@ const archivo = localFont({
   declarations: [{ prop: "font-stretch", value: "62% 125%" }],
 });
 
+const description =
+  "Weekly PPR projections for running backs, receivers and tight ends from an XGBoost model, measured against a 3-week-average baseline.";
+
 export const metadata: Metadata = {
+  metadataBase: new URL(SITE_URL),
   title: {
     default: "FourthDown: fantasy football projections",
     template: "%s | FourthDown",
   },
-  description:
-    "Weekly PPR projections for running backs, receivers and tight ends from an XGBoost model, measured against a 3-week-average baseline.",
+  description,
+  openGraph: {
+    type: "website",
+    siteName: "FourthDown",
+    title: "FourthDown: fantasy football projections",
+    description,
+  },
+  twitter: { card: "summary_large_image" },
 };
 
 export const viewport: Viewport = {

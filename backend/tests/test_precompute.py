@@ -86,7 +86,7 @@ def output(tmp_path_factory, monkeypatch_module):
     stats = synthetic_stats()
     precompute.run(stats=stats, out_dir=out_dir, use_sleeper=False)
     files = {p.name: json.loads(p.read_text()) for p in out_dir.glob("*.json")}
-    return stats, files
+    return stats, files, out_dir
 
 
 @pytest.fixture(scope="module")
@@ -97,7 +97,7 @@ def monkeypatch_module():
 
 
 def test_writes_all_files(output):
-    _, files = output
+    _, files, _ = output
     assert set(files) == {
         "meta.json",
         "metrics.json",
@@ -110,7 +110,7 @@ def test_writes_all_files(output):
 
 
 def test_meta(output):
-    _, files = output
+    _, files, _ = output
     meta = files["meta.json"]
     assert meta["data_through_week"] == 6
     assert meta["projection_week"] == 7
@@ -119,7 +119,7 @@ def test_meta(output):
 
 
 def test_metrics_match_model_modules(output):
-    stats, files = output
+    stats, files, _ = output
     metrics = files["metrics.json"]
 
     features = build_features(stats)
@@ -141,7 +141,7 @@ def test_metrics_match_model_modules(output):
 
 
 def test_projections(output):
-    _, files = output
+    _, files, _ = output
     proj = files["projections.json"]
     players = proj["players"]
     assert proj["count"] == len(players) > 0
@@ -172,7 +172,7 @@ def test_projections(output):
 
 
 def test_breakouts_follow_criteria(output):
-    _, files = output
+    _, files, _ = output
     for p in files["breakouts.json"]["players"]:
         assert p["projected_points"] >= 7
         assert p["projection_gain"] >= 2
@@ -180,7 +180,7 @@ def test_breakouts_follow_criteria(output):
 
 
 def test_waivers_exclude_likely_rostered(output):
-    _, files = output
+    _, files, _ = output
     waivers = files["waivers.json"]
     proj = {p["player_id"]: p for p in files["projections.json"]["players"]}
     cutoffs = waivers["availability"]["rostered_cutoffs"]
@@ -197,3 +197,22 @@ def test_waivers_exclude_likely_rostered(output):
     for p in waivers["players"]:
         assert p["projected_points"] >= 5
         assert p["sleeper_adds_48h"] is None
+
+
+def test_rerun_with_same_data_is_a_no_op(output):
+    stats, files, out_dir = output
+    before = {p.name: p.read_bytes() for p in out_dir.glob("*.json")}
+    _, changed = precompute.run(stats=stats, out_dir=out_dir, use_sleeper=False)
+    after = {p.name: p.read_bytes() for p in out_dir.glob("*.json")}
+    assert changed is False
+    assert before == after
+
+
+def test_new_data_is_reported_as_changed(output, tmp_path):
+    stats, _, _ = output
+    precompute.run(stats=stats, out_dir=tmp_path, use_sleeper=False)
+    trimmed = stats[~((stats["season"] == 2026) & (stats["week"] == 6))]
+    _, changed = precompute.run(stats=trimmed, out_dir=tmp_path, use_sleeper=False)
+    assert changed is True
+    meta = json.loads((tmp_path / "meta.json").read_text())
+    assert meta["data_through_week"] == 5
