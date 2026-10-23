@@ -136,3 +136,21 @@ test("chart values are reachable by keyboard", async ({ page, isMobile }) => {
   await bar.focus();
   await expect(page.getByRole("status").filter({ hasText: `Week ${first.target_week}` })).toContainText(two(first.xgboost_mae));
 });
+
+test("the edge band pitches breakouts, waivers and league moves with live receipts", async ({ page }) => {
+  const band = page.getByRole("region", { name: "Anyone can project points. We find the edge." });
+  const biggest = [...breakouts.players].sort((a, b) => b.projection_gain - a.projection_gain)[0];
+  const cut = waivers.availability.rostered_cutoffs;
+  await expect(band.getByRole("heading", { level: 3 })).toHaveText([
+    "Catch breakouts early",
+    "Only players you can get",
+    "Moves for your roster",
+  ]);
+  await expect(band).toContainText(`${breakouts.count} breakouts this week. Biggest jump: ${biggest.name}, +${one(biggest.projection_gain)} over his 3-week average.`);
+  await expect(band).toContainText(`the top ${cut.RB} RB, ${cut.WR} WR and ${cut.TE} TE`);
+  await expect(band).toContainText(
+    `${waivers.count} pickups this week. Top claim: ${waivers.players[0].name}, ${one(waivers.players[0].projected_points)} projected.`,
+  );
+  await band.getByRole("link", { name: "Connect your league" }).click();
+  await expect(page).toHaveURL("/league");
+});

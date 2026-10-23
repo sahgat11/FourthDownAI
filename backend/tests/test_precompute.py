@@ -230,3 +230,33 @@ def test_breakout_and_waiver_history(output):
             assert history[-1]["points"] == p["last_week_points"]
             for g in history:
                 assert set(g) == {"week", "points", "touches", "target_share"}
+
+
+SLEEPER_PLAYERS = {
+    "100": {"full_name": "Player 1", "position": "WR", "team": "BBB", "active": True, "gsis_id": "00-0000001"},
+    "101": {"first_name": "Player", "last_name": "2", "position": "TE", "team": "CCC", "active": True},
+    "102": {"full_name": "Some Lineman", "position": "OL", "team": "AAA", "active": True},
+    "103": {"full_name": "Retired Guy", "position": "RB", "team": None, "active": False},
+    "AAA": {"position": "DEF", "team": "AAA", "active": True},
+}
+
+
+def test_league_players_map(tmp_path, monkeypatch):
+    monkeypatch.setattr(precompute, "load_schedule", fake_schedule)
+    monkeypatch.setattr(precompute, "load_sleeper_players", lambda: SLEEPER_PLAYERS)
+    monkeypatch.setattr(precompute, "fetch_sleeper_trending", lambda players: None)
+    precompute.run(stats=synthetic_stats(), out_dir=tmp_path, use_sleeper=True)
+    league = json.loads((tmp_path / "league_players.json").read_text())
+    assert league["players"] == {
+        "100": ["Player 1", "WR", "BBB", "00-0000001"],
+        "101": ["Player 2", "TE", "CCC", None],
+        "AAA": ["AAA D/ST", "DEF", "AAA", None],
+    }
+
+
+def test_league_players_left_alone_without_sleeper(tmp_path, monkeypatch):
+    monkeypatch.setattr(precompute, "load_schedule", fake_schedule)
+    existing = tmp_path / "league_players.json"
+    existing.write_text('{"keep": true}')
+    precompute.run(stats=synthetic_stats(), out_dir=tmp_path, use_sleeper=False)
+    assert existing.read_text() == '{"keep": true}'

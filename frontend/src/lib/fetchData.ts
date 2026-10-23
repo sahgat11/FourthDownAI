@@ -4,7 +4,7 @@
 // re-requesting on every render) until forgetDataFile() is called by
 // the "Try again" button.
 
-import type { BreakoutsFile, MetaFile, MetricsFile, ProjectionsFile, WaiversFile } from "./types";
+import type { BreakoutsFile, LeaguePlayersFile, MetaFile, MetricsFile, ProjectionsFile, WaiversFile } from "./types";
 
 export const SCHEMA_VERSION = 1;
 const TIMEOUT_MS = 15_000;
@@ -15,6 +15,7 @@ export interface DataFiles {
   "projections.json": ProjectionsFile;
   "breakouts.json": BreakoutsFile;
   "waivers.json": WaiversFile;
+  "league_players.json": LeaguePlayersFile;
 }
 export type DataFileName = keyof DataFiles;
 
@@ -55,7 +56,9 @@ async function request<N extends DataFileName>(name: N): Promise<DataFiles[N]> {
   if (version !== SCHEMA_VERSION) {
     throw new DataError("format", `Expected data format version ${SCHEMA_VERSION}, got ${String(version)}.`);
   }
-  if ("players" in (body as object) && !Array.isArray((body as { players: unknown }).players)) {
+  // Player lists are arrays, except league_players.json (keyed by Sleeper id).
+  const players = (body as { players?: unknown }).players;
+  if ("players" in (body as object) && (players === null || typeof players !== "object")) {
     throw new DataError("format", "The data file is missing its player list.");
   }
   return body as DataFiles[N];

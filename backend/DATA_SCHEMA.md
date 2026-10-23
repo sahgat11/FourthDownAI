@@ -9,7 +9,7 @@ number on the site is traceable to a precompute run.
 python backend/precompute.py                         # pull nflverse, write files
 python backend/precompute.py --save-stats stats.parquet   # also cache raw stats
 python backend/precompute.py --stats-file stats.parquet   # rerun from cache
-python backend/precompute.py --no-sleeper            # skip Sleeper trending lookup
+python backend/precompute.py --no-sleeper            # skip Sleeper (trending adds, league map)
 python -m pytest backend/tests                       # schema + metric tests
 ```
 
@@ -171,6 +171,27 @@ rostered in a typical 12-team league and excluded. The remaining pool
   }]
 }
 ```
+
+## `league_players.json`
+
+Compact Sleeper player map for the site's league mode, which reads a
+Sleeper league's rosters in the browser. Fantasy positions only (QB, RB,
+WR, TE, K, DEF), active players or anyone still on a team.
+
+```jsonc
+{
+  "schema_version": 1, "season": 2026, "count": 1180,
+  "players": {
+    "4034": ["Christian McCaffrey", "RB", "SF", "00-0033280"],  // [name, position, team, gsis_id]
+    "SF":   ["SF D/ST", "DEF", "SF", null]
+  }
+}
+```
+
+Rosters are matched to projections by `gsis_id` first, then by normalized
+name + position (the same rules as `waiver_engine.create_player_key`).
+Written only when Sleeper's directory can be loaded; otherwise the
+previous file is kept.
 
 ## Game history (`history` on breakout and waiver players)
 

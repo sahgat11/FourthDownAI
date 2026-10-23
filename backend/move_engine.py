@@ -78,6 +78,13 @@ def optimize_skill_lineup(
         )
     ].copy()
 
+    # A player on bye can't fill this week's lineup (he still counts as
+    # a roster asset elsewhere). Only applies when bye data is present.
+    if "on_bye" in available.columns:
+        available = available[
+            ~available["on_bye"].fillna(False).astype(bool)
+        ].copy()
+
     if available.empty:
         return (
             0.0,
@@ -376,6 +383,8 @@ def build_waiver_roster_row(
             waiver.get("week"),
         "match_method":
             "WAIVER",
+        "on_bye":
+            bool(waiver.get("on_bye", False)),
     }
 
 
@@ -485,6 +494,13 @@ def generate_add_drop_recommendations(
         droppable = droppable[
             droppable_weeks
             >= latest_data_week
+        ].copy()
+
+    # Likewise, a bye week says nothing about a player's value, and he
+    # doesn't count toward this week's lineup, so never offer him as a drop.
+    if "on_bye" in droppable.columns:
+        droppable = droppable[
+            ~droppable["on_bye"].fillna(False).astype(bool)
         ].copy()
 
     if droppable.empty:

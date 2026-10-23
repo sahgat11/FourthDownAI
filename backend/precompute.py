@@ -437,20 +437,33 @@ def build_breakouts(base, pool, matchups, projection_week, history=None):
 # ---------------------------------------------------------------- waivers
 
 
-def fetch_sleeper_trending():
+def load_sleeper_players():
+    """Sleeper's player directory, or None when it can't be loaded."""
+
+    try:
+        from sleeper_client import get_nfl_players
+
+        return get_nfl_players(allow_stale=True)
+    except Exception as error:  # network / API failure is non-fatal
+        print(f"Sleeper player directory unavailable: {error.__class__.__name__}")
+        return None
+
+
+def fetch_sleeper_trending(players):
     """
     Optional signal: Sleeper's public trending adds (last 48h), keyed
     by GSIS id. Returns None when Sleeper is unreachable.
     """
 
+    if players is None:
+        return None
     try:
-        from sleeper_client import get_nfl_players, make_request
+        from sleeper_client import make_request
 
         trending = make_request(
             "/players/nfl/trending/add?lookback_hours=48&limit=300"
         )
-        players = get_nfl_players()
-    except Exception as error:  # network / API failure is non-fatal
+    except Exception as error:
         print(f"Sleeper trending adds unavailable: {error.__class__.__name__}")
         return None
 
@@ -461,6 +474,48 @@ def fetch_sleeper_trending():
         if gsis_id:
             adds[str(gsis_id).strip()] = int(item.get("count") or 0)
     return adds
+
+
+# ----------------------------------------------------------- league players
+
+LEAGUE_POSITIONS = {"QB", "RB", "WR", "TE", "K", "DEF"}
+
+
+def build_league_players(sleeper_players, season):
+    """
+    Compact Sleeper id -> [name, position, team, gsis_id] map so the site
+    can read a Sleeper league's rosters in the browser without the 16 MB
+    directory. Fantasy positions only; free agents kept if still active.
+    """
+
+    from waiver_engine import get_sleeper_full_name
+
+    players = {}
+    for sleeper_id, p in sleeper_players.items():
+        position = p.get("position")
+        if position not in LEAGUE_POSITIONS:
+            continue
+        if not (p.get("active") or p.get("team")):
+            continue
+        name = (
+            f"{p.get('team')} D/ST" if position == "DEF" and p.get("team")
+            else get_sleeper_full_name(p)
+        )
+        if not name:
+            continue
+        gsis = p.get("gsis_id")
+        players[str(sleeper_id)] = [
+            name,
+            position,
+            p.get("team"),
+            str(gsis).strip() if gsis else None,
+        ]
+    return {
+        "schema_version": SCHEMA_VERSION,
+        "season": season,
+        "count": len(players),
+        "players": dict(sorted(players.items(), key=lambda kv: int(kv[0]) if kv[0].isdigit() else 10**9)),
+    }
 
 
 def likely_rostered_ids(pool):
@@ -646,7 +701,8 @@ def run(stats=None, out_dir=STATIC_DATA_DIR, use_sleeper=True):
         print(f"Schedule unavailable: {error.__class__.__name__}")
         matchups, schedule_ok = {}, False
 
-    trending = fetch_sleeper_trending() if use_sleeper else None
+    sleeper_players = load_sleeper_players() if use_sleeper else None
+    trending = fetch_sleeper_trending(sleeper_players)
 
     pool = active_pool(base, matchups if schedule_ok else None)
     metrics = build_metrics(base)
@@ -677,6 +733,11 @@ def run(stats=None, out_dir=STATIC_DATA_DIR, use_sleeper=True):
         "breakouts.json": breakouts,
         "waivers.json": waivers,
     }
+    # Without Sleeper, leave any existing league_players.json untouched.
+    if sleeper_players is not None:
+        outputs["league_players.json"] = build_league_players(
+            sleeper_players, base["season"]
+        )
     changed = write_outputs(outputs, out_dir)
     return outputs, changed
 
@@ -695,7 +756,7 @@ def main():
     parser.add_argument(
         "--no-sleeper",
         action="store_true",
-        help="Skip the optional Sleeper trending-adds lookup.",
+        help="Skip Sleeper (trending adds and league_players.json).",
     )
     args = parser.parse_args()
 

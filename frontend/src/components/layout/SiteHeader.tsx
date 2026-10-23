@@ -11,6 +11,7 @@ export const NAV = [
   { href: "/projections", label: "Projections" },
   { href: "/breakouts", label: "Breakouts" },
   { href: "/waivers", label: "Waivers" },
+  { href: "/league", label: "My league" },
 ] as const;
 
 export function SiteHeader() {

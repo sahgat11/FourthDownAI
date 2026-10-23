@@ -103,8 +103,14 @@ def get_user_roster(
 
 
 def get_nfl_players(
-    force_refresh=False
+    force_refresh=False,
+    allow_stale=False,
 ):
+    """
+    Sleeper's full player directory (~16 MB), cached for a day in
+    data/sleeper_players.json. With allow_stale, an older cache is
+    returned when Sleeper can't be reached.
+    """
     PLAYER_CACHE_FILE.parent.mkdir(
         parents=True,
         exist_ok=True
@@ -131,9 +137,19 @@ def get_nfl_players(
         "player directory..."
     )
 
-    players = make_request(
-        "/players/nfl"
-    )
+    try:
+        players = make_request(
+            "/players/nfl"
+        )
+    except requests.RequestException:
+        if allow_stale and PLAYER_CACHE_FILE.exists():
+            print(
+                "Sleeper unreachable; using cached "
+                "player directory."
+            )
+            with open(PLAYER_CACHE_FILE, "r") as file:
+                return json.load(file)
+        raise
 
     with open(
         PLAYER_CACHE_FILE,

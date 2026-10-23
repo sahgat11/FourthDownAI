@@ -6,6 +6,7 @@ const pages = [
   { path: "/projections", link: "Projections", h1: `Week ${data.meta.projection_week} projections` },
   { path: "/breakouts", link: "Breakouts", h1: "Breakout watch" },
   { path: "/waivers", link: "Waivers", h1: "Waiver targets" },
+  { path: "/league", link: "My league", h1: "Your league" },
 ];
 
 test("main nav reaches every page and marks the current one", async ({ page }) => {
