@@ -3,7 +3,7 @@
 [![CI](https://github.com/sahgat11/FourthDownAI/actions/workflows/ci.yml/badge.svg)](https://github.com/sahgat11/FourthDownAI/actions/workflows/ci.yml)
 [![Refresh data](https://github.com/sahgat11/FourthDownAI/actions/workflows/refresh-data.yml/badge.svg)](https://github.com/sahgat11/FourthDownAI/actions/workflows/refresh-data.yml)
 
-**Live site: LIVE_URL**
+**Live site: [fourth-down-ai.vercel.app](https://fourth-down-ai.vercel.app)**
 
 FourthDown projects next-week PPR fantasy points for every active NFL running back, wide receiver and tight end, then grades itself against the obvious alternative: assuming each player repeats his 3-week average.
 
